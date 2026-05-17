@@ -1,7 +1,7 @@
 {
   "name": "rising-sign-calculator",
   "version": "1.0.0",
-  "description": "Astrological Rising Sign Calculator powered by Swiss Ephemeris",
+  "description": "Astrological Rising Sign Calculator",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@astrodraw/astrochart": "^3.0.2",
-    "@swisseph/node": "^1.2.2",
+    "astronomy-engine": "^2.1.19",
     "express": "^4.18.2"
   }
 }

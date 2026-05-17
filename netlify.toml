@@ -1,0 +1,8 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/timezone"
+  to = "/.netlify/functions/timezone"
+  status = 200

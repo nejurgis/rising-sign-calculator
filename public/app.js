@@ -91,6 +91,100 @@ const PLANET_GLYPHS = {
   jupiter: '♃', saturn: '♄', uranus: '⛢', neptune: '♆', pluto: '♇'
 };
 
+/* ── Astronomy calculation helpers ── */
+const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
+
+function julianDay(y, m, d, hUT) {
+  if (m <= 2) { y--; m += 12; }
+  const A = Math.floor(y / 100);
+  const B = 2 - A + Math.floor(A / 4);
+  return Math.floor(365.25 * (y + 4716)) + Math.floor(30.6001 * (m + 1)) + d + hUT / 24 + B - 1524.5;
+}
+
+function obliquity(jd) {
+  const T = (jd - 2451545.0) / 36525;
+  return (23.439291111 - 0.013004167 * T) * Math.PI / 180;
+}
+
+function gmstDeg(jd) {
+  const T = (jd - 2451545.0) / 36525;
+  const g = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T - T * T * T / 38710000;
+  return ((g % 360) + 360) % 360;
+}
+
+function calcAscendant(jd, lat, lon) {
+  const lmst = ((gmstDeg(jd) + lon) % 360 + 360) % 360 * Math.PI / 180;
+  const eps  = obliquity(jd);
+  const phi  = lat * Math.PI / 180;
+  let asc = Math.atan2(Math.cos(lmst), -(Math.sin(lmst) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps)));
+  asc = asc * 180 / Math.PI;
+  return ((asc % 360) + 360) % 360;
+}
+
+function calcMC(jd, lon) {
+  const lmst = ((gmstDeg(jd) + lon) % 360 + 360) % 360 * Math.PI / 180;
+  const eps  = obliquity(jd);
+  let mc = Math.atan2(Math.sin(lmst), Math.cos(lmst) * Math.cos(eps));
+  mc = mc * 180 / Math.PI;
+  return ((mc % 360) + 360) % 360;
+}
+
+function makeLonInfo(lon360) {
+  const norm   = ((lon360 % 360) + 360) % 360;
+  const idx    = Math.floor(norm / 30) % 12;
+  const inSign = norm % 30;
+  const deg    = Math.floor(inSign);
+  const min    = Math.round((inSign - deg) * 60);
+  return { longitude: norm, sign: SIGN_NAMES[idx], signIndex: idx, degree: deg, minute: min };
+}
+
+function wholeSignCusps(ascLon) {
+  const first = Math.floor(((ascLon % 360) + 360) % 360 / 30) * 30;
+  return Array.from({ length: 12 }, (_, i) => (first + i * 30) % 360);
+}
+
+const ASTRO_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+const OUTER_KEYS = ['jupiter','saturn','uranus','neptune','pluto'];
+const INNER_KEYS = ['sun','moon','mercury','venus','mars'];
+const NEUTRAL_CUSPS = [0,30,60,90,120,150,180,210,240,270,300,330];
+
+function jdToDate(jd) {
+  return new Date(J2000_MS + (jd - 2451545.0) * 86400000);
+}
+
+function calcPlanets(jd, keys = ASTRO_KEYS) {
+  const time = Astronomy.MakeTime(jdToDate(jd));
+  const result = {};
+  for (const key of keys) {
+    try {
+      let lon;
+      if (key === 'sun') {
+        lon = Astronomy.SunPosition(time).elon;
+      } else {
+        const name = key.charAt(0).toUpperCase() + key.slice(1);
+        lon = Astronomy.EclipticLongitude(name, time);
+      }
+      result[key] = makeLonInfo(lon);
+    } catch {}
+  }
+  return result;
+}
+
+function buildFullResult(y, mo, d, hUT, lat, lon) {
+  const jd       = julianDay(y, mo, d, hUT);
+  const ascLon   = calcAscendant(jd, lat, lon);
+  const mcLon    = calcMC(jd, lon);
+  const cusps    = wholeSignCusps(ascLon);
+  const planets  = calcPlanets(jd);
+  return {
+    ascendant:   makeLonInfo(ascLon),
+    midheaven:   makeLonInfo(mcLon),
+    houseSystem: 'Whole Sign',
+    planets,
+    cusps
+  };
+}
+
 /* ── DOM refs ── */
 const fDate       = document.getElementById('f-date');
 const fTime       = document.getElementById('f-time');
@@ -105,6 +199,7 @@ const btnSubmit   = document.getElementById('btn-submit');
 const formError   = document.getElementById('form-error');
 const calculator  = document.getElementById('calculator');
 const resultSec   = document.getElementById('result');
+const analysisCol = document.getElementById('analysis-col');
 const btnRecalc   = document.getElementById('btn-recalc');
 
 /* ── Input Validation (Red Underline on Blur) ── */
@@ -134,8 +229,19 @@ cityInput.addEventListener('input', () => {
 
 async function fetchCities(q) {
   try {
-    const r = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
-    const data = await r.json();
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`;
+    const r = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const raw = await r.json();
+    const data = raw.map(item => {
+      const addr = item.address || {};
+      const city = addr.city || addr.town || addr.village || addr.municipality || item.name;
+      return {
+        displayName: item.display_name,
+        shortName: [city, addr.country].filter(Boolean).join(', '),
+        lat: parseFloat(item.lat),
+        lon: parseFloat(item.lon)
+      };
+    });
     showSuggestions(data);
   } catch {
     hideSuggestions();
@@ -233,52 +339,104 @@ calcForm.addEventListener('submit', async e => {
   btnSubmit.disabled = true;
 
   try {
-    // Parse the native "YYYY-MM-DD" string
     const [yearStr, monthStr, dayStr] = fDate.value.split('-');
-    
-    // Parse the native "HH:MM" string
     const [hStr, mStr] = fTime.value.split(':');
-    const hourVal = parseInt(hStr, 10);
-    const minuteVal = parseInt(mStr, 10);
+    const y   = parseInt(yearStr, 10);
+    const mo  = parseInt(monthStr, 10);
+    const d   = parseInt(dayStr, 10);
+    const lat = parseFloat(fLat.value);
+    const lon = parseFloat(fLon.value);
+    const utc = fUtc && fUtc.value ? parseFloat(fUtc.value) : 0;
+    let hUT   = parseInt(hStr, 10) + parseInt(mStr, 10) / 60 - utc;
 
-    const body = {
-      year:      parseInt(yearStr, 10),
-      month:     parseInt(monthStr, 10),
-      day:       parseInt(dayStr, 10),
-      hour:      hourVal,
-      minute:    minuteVal,
-      lat:       parseFloat(fLat.value),
-      lon:       parseFloat(fLon.value),
-      utcOffset: fUtc && fUtc.value ? parseFloat(fUtc.value) : 0
-    };
+    // Roll day boundaries
+    let yd = d, ym = mo, yy = y;
+    while (hUT < 0)  { hUT += 24; yd--; if (yd < 1) { ym--; if (ym < 1) { ym = 12; yy--; } yd = new Date(yy, ym, 0).getDate(); } }
+    while (hUT >= 24){ hUT -= 24; yd++; const last = new Date(yy, ym, 0).getDate(); if (yd > last) { yd = 1; ym++; if (ym > 12) { ym = 1; yy++; } } }
 
-    const r = await fetch('/api/calculate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    
-    const data = await r.json();
-    if (!r.ok) throw new Error(data.error || 'Calculation failed.');
-
+    const data = buildFullResult(yy, ym, yd, hUT, lat, lon);
     showResult(data);
   } catch (err) {
-    if (formError) formError.textContent = err.message;
+    if (formError) formError.textContent = err.message || 'Calculation failed.';
   } finally {
     btnSubmit.classList.remove('loading');
     btnSubmit.disabled = false;
   }
 });
 
-/* ── Display result ── */
-/* ── Display result ── */
-/* ── Display result ── */
-/* ── Display result ── */
-/* ── Display result ── */
+/* ── Progressive wheel reveal ── */
+let progressiveTimer = null;
+
+function showWheelPreview(planets, cusps, animate = false) {
+  if (resultSec.hidden) {
+    resultSec.hidden = false;
+    resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (analysisCol) analysisCol.hidden = true;
+  renderWheel(null, planets, cusps, animate);
+}
+
+fDate.addEventListener('input', () => {
+  const v = fDate.value;
+  if (!v) return;
+  const [y, mo, d] = v.split('-').map(Number);
+  if (!y || y < 1800 || y > 2200) return;
+
+  clearTimeout(progressiveTimer);
+
+  // Stage 1: outer planets for Jan 1 of this year
+  const jdOuter = julianDay(y, 1, 1, 12);
+  const outerPlanets = calcPlanets(jdOuter, OUTER_KEYS);
+  showWheelPreview(outerPlanets, NEUTRAL_CUSPS, true);
+
+  if (!mo || !d) return;
+
+  // Stage 2: all planets at noon on the actual date
+  progressiveTimer = setTimeout(() => {
+    const jdFull = julianDay(y, mo, d, 12);
+    const allNoon = calcPlanets(jdFull);
+    showWheelPreview(allNoon, NEUTRAL_CUSPS, true);
+
+    // Stage 3: if time + location already set, orient to real ASC immediately
+    if (fTime.value && fLat.value) {
+      tryLiveAsc(y, mo, d);
+    }
+  }, 450);
+});
+
+fTime.addEventListener('input', () => {
+  if (!fDate.value || !fLat.value) return;
+  const [y, mo, d] = fDate.value.split('-').map(Number);
+  if (!y || !mo || !d) return;
+  clearTimeout(progressiveTimer);
+  progressiveTimer = setTimeout(() => tryLiveAsc(y, mo, d), 350);
+});
+
+function tryLiveAsc(y, mo, d) {
+  if (!fTime.value || !fLat.value || !fUtc.value) return;
+  const [hStr, mStr] = fTime.value.split(':');
+  const utc = parseFloat(fUtc.value);
+  let hUT = parseInt(hStr, 10) + parseInt(mStr, 10) / 60 - utc;
+  const lat = parseFloat(fLat.value);
+  const lon = parseFloat(fLon.value);
+
+  let yd = d, ym = mo, yy = y;
+  while (hUT < 0)  { hUT += 24; yd--; if (yd < 1) { ym--; if (ym < 1) { ym = 12; yy--; } yd = new Date(yy, ym, 0).getDate(); } }
+  while (hUT >= 24){ hUT -= 24; yd++; const last = new Date(yy, ym, 0).getDate(); if (yd > last) { yd = 1; ym++; if (ym > 12) { ym = 1; yy++; } } }
+
+  try {
+    const jd     = julianDay(yy, ym, yd, hUT);
+    const ascLon = calcAscendant(jd, lat, lon);
+    const cusps  = wholeSignCusps(ascLon);
+    const planets = calcPlanets(jd);
+    showWheelPreview(planets, cusps, true);
+  } catch {}
+}
+
 /* ── Display result ── */
 function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
-  // 1. Render Wheel
-  renderWheel(ascendant.longitude, planets || {}, cusps || []);
+  // 1. Render Wheel (final, oriented)
+  renderWheel(ascendant.longitude, planets || {}, cusps || [], true);
 
   // Helper to map a sign to its CSS elemental color class
   const getElementClass = (signName) => {
@@ -362,9 +520,10 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   }
 
   // 5. Switch views
-  if(calculator) calculator.hidden = true;
-  if(resultSec) {
-    resultSec.hidden  = false;
+  if (calculator) calculator.hidden = true;
+  if (analysisCol) analysisCol.hidden = false;
+  if (resultSec) {
+    resultSec.hidden = false;
     resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
@@ -376,6 +535,7 @@ function formatDegree({ degree, minute, sign }) {
 /* ── Recalculate ── */
 btnRecalc.addEventListener('click', () => {
   resultSec.hidden  = true;
+  if (analysisCol) analysisCol.hidden = true;
   calculator.hidden = false;
   calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
@@ -426,11 +586,10 @@ const AC_SETTINGS = {
   },
 };
 
-function renderWheel(ascLon, planets, cusps) {
+function renderWheel(ascLon, planets, cusps, animate = false) {
   const container = document.getElementById('zodiac-wheel');
   container.innerHTML = '';
 
-  // Map snake_case planet keys to AstroChart PascalCase names
   const KEY_MAP = {
     sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus',
     mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn',
@@ -441,10 +600,15 @@ function renderWheel(ascLon, planets, cusps) {
     if (pos && KEY_MAP[key]) acPlanets[KEY_MAP[key]] = [pos.longitude];
   }
 
-  // Use fixed size matching CSS; container may be hidden (clientWidth = 0) at call time
   const chart = new astrochart.Chart('zodiac-wheel', 520, 520, AC_SETTINGS);
   const radix = chart.radix({ planets: acPlanets, cusps });
   radix.aspects();
+
+  if (animate) {
+    container.classList.remove('wheel-appear');
+    void container.offsetWidth; // force reflow to restart animation
+    container.classList.add('wheel-appear');
+  }
 }
 
 /* ── (legacy buildWheel retained for reference, unused) ── */

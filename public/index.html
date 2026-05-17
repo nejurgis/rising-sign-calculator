@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ascendant — Free Rising Sign Calculator</title>
-  <meta name="description" content="Free online calculator for your Ascendant and Rising Sign. Powered by Swiss Ephemeris.">
+  <meta name="description" content="Free online calculator for your Ascendant and Rising Sign.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -18,87 +18,78 @@
     </div>
   </header>
 
-  <section class="calculator" id="calculator">
+  <section class="app-section">
     <div class="container">
+      <div class="app-grid">
 
-      <p class="calc-label">Make your own chart.<br> For precise astrological calculation you should always use your exact birth time.</p>
+        <!-- Left panel: form ↔ analysis -->
+        <div class="left-panel">
 
-      <form id="calc-form" novalidate>
+          <div id="form-panel">
+            <p class="calc-label">Make your own chart.<br>For precise astrological calculation you should always use your exact birth time.</p>
 
-        <div class="birth-sentence">
+            <form id="calc-form" novalidate>
+              <div class="birth-sentence">
 
-          <span class="word">I was born in</span>
+                <span class="word">I was born in</span>
 
-          <span class="sentence-city">
-            <div class="location-wrap">
-           <input
-              type="text"
-              id="city-input"
-              placeholder="search city..." 
-              autocomplete="off"
-              spellcheck="false"
-              aria-label="Birth city"
-              aria-autocomplete="list"
-              aria-controls="city-dropdown"
-            >
+                <span class="sentence-city">
+                  <div class="location-wrap">
+                    <input
+                      type="text"
+                      id="city-input"
+                      placeholder="search city..."
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="Birth city"
+                      aria-autocomplete="list"
+                      aria-controls="city-dropdown"
+                    >
+                    <ul id="city-dropdown" role="listbox" aria-label="City suggestions" hidden></ul>
+                  </div>
+                  <p id="location-status" class="location-status" aria-live="polite">
+                    ↳ Please select your birth city from the dropdown list.
+                  </p>
+                  <input type="hidden" id="f-lat" name="lat">
+                  <input type="hidden" id="f-lon" name="lon">
+                  <input type="hidden" id="f-utc" name="utc">
+                </span>
 
-           
-              <ul id="city-dropdown" role="listbox" aria-label="City suggestions" hidden></ul>
-            </div>
-             <p id="location-status" class="location-status" aria-live="polite">
-              ↳ Please select your birth city from the dropdown list.
-            </p>
-            
-            <input type="hidden" id="f-lat" name="lat">
-            <input type="hidden" id="f-lon" name="lon">
-            <input type="hidden" id="f-utc" name="utc">
-          </span>
+                <span class="word">on</span>
 
-          <span class="word">on</span>
+                <input type="date" id="f-date" name="date" required aria-label="Birth date">
 
-          <input type="date" id="f-date" name="date" required aria-label="Birth date">
+                <span class="word">at</span>
 
-          <span class="word">at</span>
+                <input type="time" id="f-time" name="time" required aria-label="Birth time">
 
-          <input type="time" id="f-time" name="time" required aria-label="Birth time">
+                <span class="word">.</span>
 
-          <span class="word">.</span>
+              </div>
 
-        </div>
-
-        <p id="location-status" class="location-status" aria-live="polite"></p>
-
-        <div class="form-footer">
-          <button type="submit" class="btn-calculate" id="btn-submit">
-            <span class="btn-text">Get ur chart</span>
-            <span class="btn-spinner" aria-hidden="true"></span>
-          </button>
-          <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
-        </div>
-
-      </form>
-    </div>
-  </section>
-
-<section class="result" id="result" hidden aria-live="polite">
-    <div class="container result-container">
-
-      <div class="result-layout">
-        
-        <div class="wheel-col">
-          <div id="zodiac-wheel" class="zodiac-wheel" aria-hidden="true"></div>
-        </div>
-
-        <div class="analysis-col" id="analysis-col">
-          
-          <p class="big-three-summary" id="big-three-summary"></p>
-
-          <ul class="placement-list" id="placement-list">
-            </ul>
-
-          <div class="result-actions">
-            <button class="btn-recalc" id="btn-recalc" type="button">← Recalculate</button>
+              <div class="form-footer">
+                <button type="submit" class="btn-calculate" id="btn-submit">
+                  <span class="btn-text">Get ur chart</span>
+                  <span class="btn-spinner" aria-hidden="true"></span>
+                </button>
+                <p id="form-error" class="form-error" role="alert" aria-live="polite"></p>
+              </div>
+            </form>
           </div>
+
+          <div id="analysis-col" hidden>
+            <p class="big-three-summary" id="big-three-summary"></p>
+            <ul class="placement-list" id="placement-list"></ul>
+            <div class="result-actions">
+              <button class="btn-recalc" id="btn-recalc" type="button">← Recalculate</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Right panel: wheel (appears as data is entered) -->
+        <div class="right-panel" id="wheel-panel" hidden>
+          <div id="zodiac-wheel" class="zodiac-wheel" aria-hidden="true"></div>
         </div>
 
       </div>

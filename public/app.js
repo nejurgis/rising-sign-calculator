@@ -199,9 +199,9 @@ const locStatus   = document.getElementById('location-status');
 const calcForm    = document.getElementById('calc-form');
 const btnSubmit   = document.getElementById('btn-submit');
 const formError   = document.getElementById('form-error');
-const calculator  = document.getElementById('calculator');
-const resultSec   = document.getElementById('result');
+const formPanel   = document.getElementById('form-panel');
 const analysisCol = document.getElementById('analysis-col');
+const wheelPanel  = document.getElementById('wheel-panel');
 const btnRecalc   = document.getElementById('btn-recalc');
 
 /* ── Input Validation (Red Underline on Blur) ── */
@@ -370,11 +370,7 @@ calcForm.addEventListener('submit', async e => {
 let progressiveTimer = null;
 
 function showWheelPreview(planets, cusps, animate = false) {
-  if (resultSec.hidden) {
-    resultSec.hidden = false;
-    resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-  if (analysisCol) analysisCol.hidden = true;
+  wheelPanel.hidden = false;
   renderWheel(null, planets, cusps, animate);
 }
 
@@ -437,7 +433,7 @@ function tryLiveAsc(y, mo, d) {
 
 /* ── Display result ── */
 function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
-  // 1. Render Wheel (final, oriented)
+  // 1. Render Wheel (final, oriented with ASC marker)
   renderWheel(ascendant.longitude, planets || {}, cusps || [], true);
 
   // Helper to map a sign to its CSS elemental color class
@@ -522,12 +518,9 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   }
 
   // 5. Switch views
-  if (calculator) calculator.hidden = true;
-  if (analysisCol) analysisCol.hidden = false;
-  if (resultSec) {
-    resultSec.hidden = false;
-    resultSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  formPanel.hidden  = true;
+  analysisCol.hidden = false;
+  wheelPanel.hidden  = false;
 }
 
 function formatDegree({ degree, minute, sign }) {
@@ -536,10 +529,10 @@ function formatDegree({ degree, minute, sign }) {
 
 /* ── Recalculate ── */
 btnRecalc.addEventListener('click', () => {
-  resultSec.hidden  = true;
-  if (analysisCol) analysisCol.hidden = true;
-  calculator.hidden = false;
-  calculator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  analysisCol.hidden = true;
+  formPanel.hidden   = false;
+  wheelPanel.hidden  = true;
+  formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 /* ── Zodiac wheel (AstroChart) ── */
@@ -600,6 +593,10 @@ function renderWheel(ascLon, planets, cusps, animate = false) {
   const acPlanets = {};
   for (const [key, pos] of Object.entries(planets)) {
     if (pos && KEY_MAP[key]) acPlanets[KEY_MAP[key]] = [pos.longitude];
+  }
+  // Add ASC marker when we have a real ascendant (not neutral preview)
+  if (ascLon != null) {
+    acPlanets['As'] = [ascLon];
   }
 
   const chart = new astrochart.Chart('zodiac-wheel', 520, 520, AC_SETTINGS);

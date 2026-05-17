@@ -1,0 +1,21 @@
+# What's My Rising
+
+> Free rising sign and astrological big three calculator at https://whatsmyrising.com
+
+## What it does
+
+Calculates a person's astrological Ascendant (rising sign), Sun sign, Moon sign, and all planetary placements from their birth date, time, and city. Uses the whole-sign house system, the oldest known house system in Western astrology.
+
+## Key concepts
+
+- **Rising sign / Ascendant**: the zodiac sign that was rising on the eastern horizon at the exact moment and location of your birth. It changes every ~2 hours, which is why birth time matters.
+- **Big three**: the three most personal points in a birth chart — Sun (your core identity), Moon (your emotional nature), and Ascendant (how others perceive you).
+- **Whole sign houses**: a house system where each of the 12 houses corresponds exactly to one zodiac sign, beginning with the Ascendant sign as the first house. Used by Hellenistic astrologers since antiquity.
+
+## How to use
+
+Enter birth city, date, and time. The tool geocodes the city, looks up the historical UTC offset, and computes all planetary positions using the Astronomy Engine library. No sign-up required. Free.
+
+## Author
+
+Made by Jurgis — astrologer and designer based in Vilnius. Astrological consultations available at https://jurgis.info/astrology

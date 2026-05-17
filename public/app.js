@@ -202,6 +202,7 @@ const formError   = document.getElementById('form-error');
 const formPanel   = document.getElementById('form-panel');
 const analysisCol = document.getElementById('analysis-col');
 const wheelPanel  = document.getElementById('wheel-panel');
+const signIntro   = document.getElementById('sign-intro');
 const btnRecalc   = document.getElementById('btn-recalc');
 const fEmail      = document.getElementById('f-email');
 
@@ -386,6 +387,7 @@ let progressiveTimer = null;
 
 function showWheelPreview(planets, cusps, animate = false) {
   wheelPanel.hidden = false;
+  if (signIntro) signIntro.hidden = true;
   renderWheel(null, planets, cusps, animate);
 }
 
@@ -544,6 +546,7 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   formPanel.hidden  = true;
   analysisCol.hidden = false;
   wheelPanel.hidden  = false;
+  if (signIntro) signIntro.hidden = true;
 }
 
 function formatDegree({ degree, minute, sign }) {
@@ -555,6 +558,7 @@ btnRecalc.addEventListener('click', () => {
   analysisCol.hidden = true;
   formPanel.hidden   = false;
   wheelPanel.hidden  = true;
+  if (signIntro) signIntro.hidden = false;
   formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 

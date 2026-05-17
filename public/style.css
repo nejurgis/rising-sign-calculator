@@ -127,11 +127,6 @@ h2 {
   align-items: start;
 }
 
-/* When wheel panel is hidden, left panel spans full width */
-.app-grid:not(:has(#wheel-panel:not([hidden]))) .left-panel {
-  grid-column: 1 / -1;
-}
-
 .left-panel {
   min-width: 0;
 }
@@ -503,6 +498,49 @@ img.custom-glyph {
     padding: 1rem 0;
   }
 }
+/* ── Sign intro + nav ── */
+#sign-intro {
+  padding-top: 0.25rem;
+}
+
+.sign-intro-blurb {
+  font-family: var(--ff-serif);
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: 0.3px;
+  font-variant-ligatures: none;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+  max-width: 36ch;
+}
+
+.sign-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.sign-nav a {
+  display: block;
+  font-family: var(--ff-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 0.6rem 0.75rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s;
+}
+
+.sign-nav a:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
 /* ── Wheel appear animation ── */
 @keyframes wheelAppear {
   0%   { opacity: 0; transform: rotate(-8deg) scale(0.93); }

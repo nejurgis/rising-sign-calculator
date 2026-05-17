@@ -599,7 +599,8 @@ function renderWheel(ascLon, planets, cusps, animate = false) {
     acPlanets['As'] = [ascLon];
   }
 
-  const chart = new astrochart.Chart('zodiac-wheel', 520, 520, AC_SETTINGS);
+  const size = Math.min(container.offsetWidth || 600, 600);
+  const chart = new astrochart.Chart('zodiac-wheel', size, size, AC_SETTINGS);
   const radix = chart.radix({ planets: acPlanets, cusps });
   radix.aspects();
 

@@ -33,17 +33,17 @@ body {
   font-size: 16px;
   line-height: 1.68;
   -webkit-font-smoothing: antialiased;
-  padding: 40px 20px;
+  padding: 20px 24px;
 }
 
 .container {
-  width: min(960px, 100%);
+  width: min(1200px, 100%);
   margin-inline: auto;
 }
 
 /* ── Header ── */
 .site-header {
-  padding-bottom: 2rem;
+  padding-bottom: 1.25rem;
 }
 .logo {
   font-family: var(--ff-mono);
@@ -58,12 +58,12 @@ body {
 /* ── Typography Utilities ── */
 .section-label, .calc-label {
   font-family: var(--ff-mono);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
   display: block;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 h2 {
@@ -80,13 +80,13 @@ h2 {
    APP GRID (form + wheel side by side)
 ──────────────────────────────────────────── */
 .app-section {
-  padding: 2rem 0 4rem 0;
+  padding: 0.5rem 0 2rem 0;
 }
 
 .app-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem 4rem;
+  gap: 1rem 2.5rem;
   align-items: start;
 }
 
@@ -101,7 +101,7 @@ h2 {
 
 .right-panel {
   position: sticky;
-  top: 2rem;
+  top: 1rem;
   min-width: 0;
 }
 
@@ -123,9 +123,9 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem 0.75rem;
-  font-size: clamp(1rem, 2vw, 1.25rem); /* Dialed this way down */
-  line-height: 1.8;
+  gap: 0.3rem 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.9;
   color: var(--text-dim);
 }
 
@@ -135,12 +135,12 @@ input[type="date"],
 input[type="time"] {
   background: transparent;
   border: none;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   border-radius: 0;
   color: var(--text);
   font-family: var(--ff-mono);
-  font-size: 1rem; /* Locked to standard size instead of inheriting the large wrapper */
-  padding: 0 0.25rem 4px 0.25rem;
+  font-size: 0.82rem;
+  padding: 0 0.2rem 2px 0.2rem;
   outline: none;
   transition: border-color 0.2s;
   cursor: pointer;
@@ -162,17 +162,9 @@ input::placeholder {
 
 /* Sizing */
 /* ── Sizing (Updated for wider inputs) ── */
-#city-input { 
-  width: 20ch; /* Slightly wider to accommodate longer city names */
-}
-
-input[type="date"], #f-date { 
-  width: 200px; /* Increased from 150px to fit full MM/DD/YYYY */
-}
-
-input[type="time"], #f-time { 
-  width: 140px; /* Increased from 110px to fit HH:MM AM/PM */
-}
+#city-input { width: 16ch; }
+input[type="date"], #f-date { width: 150px; }
+input[type="time"], #f-time { width: 110px; }
 
 /* Clean up WebKit native picker icons */
 input[type="date"]::-webkit-calendar-picker-indicator,
@@ -229,10 +221,10 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .location-status {
   font-family: var(--ff-mono);
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
-  margin-top: 1rem;
-  min-height: 1rem;
+  margin-top: 0.5rem;
+  min-height: 0.75rem;
 }
 
 /* ── Meta Data Under Form ── */
@@ -249,8 +241,8 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 .unknown-time-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
 .unknown-time-label input { accent-color: var(--text); }
 
-.form-footer { margin-top: 3rem; }
-#form-error { color: red; border-left: 2px solid #111; padding-left: 10px; font-family: var(--ff-mono); font-size: 0.8rem; margin-bottom: 1rem; min-height: 1rem; }
+.form-footer { margin-top: 1.5rem; }
+#form-error { color: red; border-left: 2px solid #111; padding-left: 10px; font-family: var(--ff-mono); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
 
 /* Submit Button */
 .btn-calculate {
@@ -261,10 +253,10 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   border: 1px solid var(--text);
   color: var(--text);
   font-family: var(--ff-mono);
-  font-size: 1rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  padding: 1rem 2.5rem;
+  padding: 0.6rem 1.75rem;
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
@@ -300,15 +292,15 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .placement-item {
   display: grid;
-  grid-template-columns: 120px 1fr 80px; /* Widened the first column from 80px to 120px */
+  grid-template-columns: 110px 1fr 70px;
   align-items: center;
-  padding: 1.25rem 0;
+  padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
 }
 
 .pi-sign {
   font-family: var(--ff-sans);
-  font-size: 1.2rem; /* Reduced so full names fit beautifully */
+  font-size: 0.78rem;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -317,7 +309,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .pi-planet {
   font-family: var(--ff-sans);
-  font-size: 1.1rem;
+  font-size: 0.78rem;
   font-weight: 400;
   text-align: center;
   color: var(--text-dim);
@@ -325,25 +317,25 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .pi-degree {
   font-family: var(--ff-mono);
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   text-align: right;
   color: var(--text-muted);
 }
 
 .result-actions {
   display: flex;
-  justify-content: center;
-  margin-top: 3rem;
+  justify-content: flex-start;
+  margin-top: 1.5rem;
 }
 
 .btn-recalc {
   font-family: var(--ff-mono);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text);
   border: 1px solid var(--text);
-  padding: 0.75rem 2rem;
+  padding: 0.5rem 1.25rem;
   background: transparent;
   cursor: pointer;
   transition: all 0.2s;
@@ -365,12 +357,10 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 /* ── Big Three Summary Sentence ── */
 .big-three-summary {
   font-family: var(--ff-serif);
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   line-height: 1.7;
   color: var(--text-dim);
-  text-align: center;
-  margin-bottom: 3.5rem; /* Added a bit more space below */
-  padding: 0 1rem;
+  margin-bottom: 2rem;
 }
 
 .big-three-summary strong {

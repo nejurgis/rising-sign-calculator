@@ -76,6 +76,13 @@ body {
 .site-header {
   padding-bottom: 1.25rem;
 }
+.site-header h1 {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
 .logo {
   font-family: var(--ff-mono);
   font-size: 1.2rem;

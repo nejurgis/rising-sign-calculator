@@ -1,4 +1,34 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inter:wght@300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Reg.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Ita.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Med.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-MedIta.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@import url('https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap');
 
 /* ── Tokens ── */
 :root {
@@ -17,8 +47,8 @@
   --border-mid: rgba(17, 17, 17, 0.3);
   --radius:     0px;
   
-  --ff-serif:   'Cormorant Garamond', 'Times New Roman', Times, serif;
-  --ff-sans:    'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --ff-serif:   'GaramondNo8', 'Times New Roman', Times, serif;
+  --ff-sans:    'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   --ff-mono:    'Space Mono', monospace;
 }
 
@@ -29,11 +59,12 @@ html { scroll-behavior: smooth; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: var(--ff-serif);
+  font-family: var(--ff-sans);
   font-size: 16px;
-  line-height: 1.68;
+  line-height: 1;
   -webkit-font-smoothing: antialiased;
   padding: 20px 24px;
+
 }
 
 .container {
@@ -57,10 +88,9 @@ body {
 
 /* ── Typography Utilities ── */
 .section-label, .calc-label {
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.72rem;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
   color: var(--text-muted);
   display: block;
   margin-bottom: 1rem;
@@ -239,7 +269,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 #city-dropdown li {
   padding: 0.4rem 0.75rem;
   border-bottom: 1px solid var(--border);
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.75rem;
   color: var(--text);
   transition: background 0.1s;
@@ -257,7 +287,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 .sug-secondary { display: block; font-family: var(--ff-sans); font-size: 0.65rem; opacity: 0.7; }
 
 .location-status {
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.65rem;
   color: var(--text-muted);
   margin-top: 0.4rem;
@@ -278,7 +308,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 .unknown-time-label input { accent-color: var(--text); }
 
 .form-footer { margin-top: 1.5rem; }
-#form-error { color: red; padding-left: 10px; font-family: var(--ff-mono); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
+#form-error { color: red; padding-left: 10px; font-family: var(--ff-sans); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
 
 /* Submit Button */
 .btn-calculate {
@@ -288,7 +318,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   background: var(--bg);
   border: 1px solid var(--text);
   color: var(--text);
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -352,7 +382,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 }
 
 .pi-degree {
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.7rem;
   text-align: right;
   color: var(--text-muted);
@@ -365,7 +395,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 }
 
 .btn-recalc {
-  font-family: var(--ff-mono);
+  font-family: var(--ff-sans);
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -391,8 +421,48 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 /* ── Big Three Summary Sentence ── */
 /* ── Big Three Summary Sentence ── */
+.about-text {
+  font: normal 15.5px/27px 'GaramondNo8', 'Times New Roman', Times, serif;
+  letter-spacing: 0.5px;
+  font-variant-ligatures: none;
+  color: var(--text-dim);
+  margin-top: 3rem;
+  max-width: 400px;
+  line-height: 1.1;
+  font-style: italic;
+}
+
+.about-text p + p {
+  text-indent: 65px;
+}
+
+.about-text a {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.about-text a:hover {
+  color: var(--text);
+}
+
+@media only screen and (max-width: 1024px) {
+  .about-text {
+    font-size: 16px;
+    line-height: 21px;
+  }
+}
+
+.birth-details {
+  font-family: var(--ff-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.03em;
+}
+
 .big-three-summary {
-  font-family: var(--ff-serif);
+  font-family: var(--ff-sans);
   font-size: 1.05rem;
   line-height: 1.7;
   color: var(--text-dim);

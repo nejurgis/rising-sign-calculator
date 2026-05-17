@@ -484,8 +484,8 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
     const moonClass = getElementClass(planets.moon.sign);
 
     summaryEl.innerHTML = `Your ASCENDANT ${CUSTOM_ICONS.ascendant} is in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
-    Your SUN ${CUSTOM_ICONS.sun} is in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
-    Your MOON ${CUSTOM_ICONS.moon} is in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
+    <br> Your SUN ${CUSTOM_ICONS.sun} is in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
+    <br> Your MOON ${CUSTOM_ICONS.moon} is in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
   }
 
   // 4. Render Placement List

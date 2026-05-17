@@ -160,9 +160,11 @@ function calcPlanets(jd, keys = ASTRO_KEYS) {
       let lon;
       if (key === 'sun') {
         lon = Astronomy.SunPosition(time).elon;
+      } else if (key === 'moon') {
+        lon = Astronomy.Ecliptic(Astronomy.GeoMoon(time)).elon;
       } else {
         const name = key.charAt(0).toUpperCase() + key.slice(1);
-        lon = Astronomy.EclipticLongitude(name, time);
+        lon = Astronomy.Ecliptic(Astronomy.GeoVector(name, time, true)).elon;
       }
       result[key] = makeLonInfo(lon);
     } catch {}

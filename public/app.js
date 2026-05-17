@@ -206,8 +206,7 @@ const btnRecalc   = document.getElementById('btn-recalc');
 const fEmail      = document.getElementById('f-email');
 
 /* ── Google Sheets email capture ── */
-// Paste your Apps Script Web App URL here after setup:
-const SHEETS_URL = '';
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzm8lmyb4sYAPbz8jlvBkmVa6kuUqzAL4poFpP9mljFp9qDjVr0bGolGwVgW4JdNhL_fg/exec';
 
 function captureEmail(email) {
   if (!email || !SHEETS_URL) return;

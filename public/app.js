@@ -203,6 +203,25 @@ const formPanel   = document.getElementById('form-panel');
 const analysisCol = document.getElementById('analysis-col');
 const wheelPanel  = document.getElementById('wheel-panel');
 const btnRecalc   = document.getElementById('btn-recalc');
+const fEmail      = document.getElementById('f-email');
+
+/* ── Google Sheets email capture ── */
+// Paste your Apps Script Web App URL here after setup:
+const SHEETS_URL = '';
+
+function captureEmail(email, data) {
+  if (!email || !SHEETS_URL) return;
+  const params = new URLSearchParams({
+    email,
+    city:      cityInput.value,
+    date:      fDate.value,
+    time:      fTime.value,
+    ascendant: data.ascendant.sign,
+    sun:       data.planets.sun?.sign || '',
+    moon:      data.planets.moon?.sign || ''
+  });
+  fetch(`${SHEETS_URL}?${params}`, { mode: 'no-cors' }).catch(() => {});
+}
 
 /* ── Input Validation (Red Underline on Blur) ── */
 const validateInputs = [fDate, fTime, cityInput];
@@ -358,6 +377,7 @@ calcForm.addEventListener('submit', async e => {
 
     const data = buildFullResult(yy, ym, yd, hUT, lat, lon);
     showResult(data);
+    captureEmail(fEmail?.value?.trim(), data);
   } catch (err) {
     if (formError) formError.textContent = err.message || 'Calculation failed.';
   } finally {

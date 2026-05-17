@@ -165,6 +165,7 @@ input::placeholder {
 #city-input { width: 16ch; }
 input[type="date"], #f-date { width: 150px; }
 input[type="time"], #f-time { width: 110px; }
+input[type="email"], #f-email { width: 18ch; }
 
 /* Clean up WebKit native picker icons */
 input[type="date"]::-webkit-calendar-picker-indicator,
@@ -200,10 +201,10 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 }
 
 #city-dropdown li {
-  padding: 0.75rem 1rem;
+  padding: 0.4rem 0.75rem;
   border-bottom: 1px solid var(--border);
   font-family: var(--ff-mono);
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   color: var(--text);
   transition: background 0.1s;
   cursor: pointer;
@@ -217,7 +218,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 }
 
 .sug-primary { display: block; font-weight: bold; }
-.sug-secondary { display: block; font-family: var(--ff-sans); font-size: 0.7rem; opacity: 0.8; }
+.sug-secondary { display: block; font-family: var(--ff-sans); font-size: 0.65rem; opacity: 0.7; }
 
 .location-status {
   font-family: var(--ff-mono);

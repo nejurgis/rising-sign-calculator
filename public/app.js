@@ -233,6 +233,10 @@ let debounceTimer = null;
 
 cityInput.addEventListener('input', () => {
   clearTimeout(debounceTimer);
+  cityInput.classList.remove('city-selected');
+  fLat.value = '';
+  fLon.value = '';
+  locStatus.hidden = false;
   const val = cityInput.value.trim();
   if (val.length < 1) { hideSuggestions(); return; }
   debounceTimer = setTimeout(() => fetchCities(val), 250);
@@ -295,7 +299,8 @@ async function selectCity(item) {
   fLat.value = item.lat;
   fLon.value = item.lon;
   hideSuggestions();
-  locStatus.textContent = `${Number(item.lat).toFixed(4)}°, ${Number(item.lon).toFixed(4)}°`;
+  locStatus.hidden = true;
+  cityInput.classList.add('city-selected');
   await fetchTimezone(item.lat, item.lon);
 }
 

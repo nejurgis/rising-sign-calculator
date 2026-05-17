@@ -122,25 +122,54 @@ h2 {
 .birth-sentence {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.3rem 0.5rem;
+  align-items: center;
+  gap: 0.3rem 0.4rem;
   font-size: 0.82rem;
-  line-height: 1.9;
+  line-height: 2;
   color: var(--text-dim);
+}
+
+/* Flex line-break helpers — zero size by default */
+.lb {
+  flex-basis: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* > 1405px: 2 lines — break only before email */
+@media (min-width: 1405px) {
+  .lb-email { flex-basis: 100%; }
+}
+
+/* 999px – 1405px: 3 lines — break after city + before email */
+@media (min-width: 999px) and (max-width: 1404px) {
+  .lb-date  { flex-basis: 100%; }
+  .lb-email { flex-basis: 100%; }
+}
+
+/* < 999px: 4 lines — break after intro, after city, before email */
+@media (max-width: 998px) {
+  .lb-city  { flex-basis: 100%; }
+  .lb-date  { flex-basis: 100%; }
+  .lb-email { flex-basis: 100%; }
 }
 
 /* ── Native Inputs Reset ── */
 input[type="text"],
 input[type="date"],
-input[type="time"] {
+input[type="time"],
+input[type="email"] {
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px dashed var(--border-mid);
   border-radius: 0;
   color: var(--text);
   font-family: var(--ff-mono);
   font-size: 0.82rem;
-  padding: 0 0.2rem 2px 0.2rem;
+  height: 21px;
+  padding: 0;
+  text-align: center;
   outline: none;
   transition: border-color 0.2s;
   cursor: pointer;
@@ -149,23 +178,30 @@ input[type="time"] {
 
 input:focus {
   border-bottom-color: var(--text);
+  border-bottom-style: solid;
 }
 /* Triggers when JS detects a blurred, empty field */
 input.invalid-input {
   border-bottom-color: #e07070 !important;
 }
 
-input::placeholder { 
-  color: var(--text-muted); 
-  opacity: 0.5; 
+input#city-input.city-selected {
+  border-bottom-style: solid;
+  border-bottom-color: var(--text);
+  text-align: left;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 /* Sizing */
 /* ── Sizing (Updated for wider inputs) ── */
-#city-input { width: 16ch; }
+#city-input { width: 22ch; }
 input[type="date"], #f-date { width: 150px; }
 input[type="time"], #f-time { width: 110px; }
-input[type="email"], #f-email { width: 18ch; }
+input[type="email"], #f-email { width: 26ch; }
 
 /* Clean up WebKit native picker icons */
 input[type="date"]::-webkit-calendar-picker-indicator,
@@ -224,8 +260,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   font-family: var(--ff-mono);
   font-size: 0.65rem;
   color: var(--text-muted);
-  margin-top: 0.5rem;
-  min-height: 0.75rem;
+  margin-top: 0.4rem;
 }
 
 /* ── Meta Data Under Form ── */
@@ -243,7 +278,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 .unknown-time-label input { accent-color: var(--text); }
 
 .form-footer { margin-top: 1.5rem; }
-#form-error { color: red; border-left: 2px solid #111; padding-left: 10px; font-family: var(--ff-mono); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
+#form-error { color: red; padding-left: 10px; font-family: var(--ff-mono); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
 
 /* Submit Button */
 .btn-calculate {

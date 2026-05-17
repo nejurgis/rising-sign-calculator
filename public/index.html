@@ -14,7 +14,7 @@
 
   <header class="site-header">
     <div class="container">
-      <a href="/" class="logo">Ascendant</a>
+      <a href="/" class="logo">Ascendant / Rising Sign <br> Calculator</a>
     </div>
   </header>
 
@@ -26,12 +26,13 @@
         <div class="left-panel">
 
           <div id="form-panel">
-            <p class="calc-label">Make your own chart.<br>For precise astrological calculation you should always use your exact birth time.</p>
+            <p class="calc-label">Check your precise chart.<br>
 
             <form id="calc-form" novalidate>
               <div class="birth-sentence">
 
                 <span class="word">I was born in</span>
+                <span class="lb lb-city"></span>
 
                 <span class="sentence-city">
                   <div class="location-wrap">
@@ -47,13 +48,11 @@
                     >
                     <ul id="city-dropdown" role="listbox" aria-label="City suggestions" hidden></ul>
                   </div>
-                  <p id="location-status" class="location-status" aria-live="polite">
-                    ↳ Please select your birth city from the dropdown list.
-                  </p>
                   <input type="hidden" id="f-lat" name="lat">
                   <input type="hidden" id="f-lon" name="lon">
                   <input type="hidden" id="f-utc" name="utc">
                 </span>
+                <span class="lb lb-date"></span>
 
                 <span class="word">on</span>
 
@@ -63,6 +62,7 @@
 
                 <input type="time" id="f-time" name="time" required aria-label="Birth time">
 
+                <span class="lb lb-email"></span>
                 <span class="word">. My email is</span>
 
                 <input type="email" id="f-email" name="email" placeholder="optional" autocomplete="email" aria-label="Email address">
@@ -70,6 +70,9 @@
                 <span class="word">.</span>
 
               </div>
+              <p id="location-status" class="location-status" aria-live="polite">
+                ↳ Please select your birth city from the dropdown list.
+              </p>
 
               <div class="form-footer">
                 <button type="submit" class="btn-calculate" id="btn-submit">

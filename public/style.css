@@ -434,8 +434,14 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   font-style: italic;
 }
 
-.about-text p + p {
+.about-text p + p,
+.rising-body p + p {
   text-indent: 65px;
+}
+
+.about-text h2 + p,
+.about-text h3 + p {
+  text-indent: 0;
 }
 
 .about-text a {

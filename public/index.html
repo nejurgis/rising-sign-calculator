@@ -121,13 +121,16 @@
 
   <section class="app-section">
     <div class="container">
-      <div class="app-grid">
+      
+      <div class="app-grid" id="main-grid">
 
         <!-- Left panel: form ↔ analysis -->
         <div class="left-panel">
 
           <div id="form-panel">
-            <p class="calc-label">Check your precise chart.<br>
+            <div class="intro-wrapper">
+              <p class="intro-text">The “rising sign” or “ascendant” is the zodiac sign that was on the eastern horizon when and where you were born. <a href="/info" class="btn-info">More Info</a></p>
+            </div>
 
             <form id="calc-form" novalidate>
               <div class="birth-sentence">
@@ -152,6 +155,7 @@
                   <input type="hidden" id="f-lat" name="lat">
                   <input type="hidden" id="f-lon" name="lon">
                   <input type="hidden" id="f-utc" name="utc">
+                  <input type="hidden" id="f-tz" name="tz">
                 </span>
                 <span class="lb lb-date"></span>
 
@@ -195,7 +199,7 @@
           </div>
 
           <div class="about-text">
-            <p class="calc-label">About<br>
+            
             <p>This tool has been made for understanding what are your "big three", using whole-sign house system that's been used by astrologers since ancient times.</p>
             <p>If you would like to see my other project you can check <a href="https://radio-venus.club" target="_blank" rel="noopener">radio-venus.club</a>.</p>
             <p>If you'd like to understand what this all means, you can book an astrological consultation with me here: <a href="https://jurgis.info/astrology" target="_blank" rel="noopener">Jurgis.info/astrology</a></p>
@@ -205,7 +209,7 @@
 
         <!-- Right panel: sign nav by default, wheel after data entry -->
         <div class="right-panel">
-          <div id="sign-intro">
+          <div id="sign-intro" hidden>
             <p class="section-label">What's a rising sign?</p>
             <p class="sign-intro-blurb">Your rising sign — or Ascendant — is the zodiac sign that was on the eastern horizon the moment you were born. It shifts every two hours, shaping how others first experience you.</p>
             <nav class="sign-nav" aria-label="Rising sign descriptions">

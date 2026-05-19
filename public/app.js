@@ -204,15 +204,9 @@ const analysisCol = document.getElementById('analysis-col');
 const wheelPanel  = document.getElementById('wheel-panel');
 const signIntro   = document.getElementById('sign-intro');
 const btnRecalc   = document.getElementById('btn-recalc');
+const fTz         = document.getElementById('f-tz');
 const fEmail      = document.getElementById('f-email');
-
-/* ── Google Sheets email capture ── */
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzm8lmyb4sYAPbz8jlvBkmVa6kuUqzAL4poFpP9mljFp9qDjVr0bGolGwVgW4JdNhL_fg/exec';
-
-function captureEmail(email) {
-  if (!email || !SHEETS_URL) return;
-  fetch(`${SHEETS_URL}?email=${encodeURIComponent(email)}`, { mode: 'no-cors' }).catch(() => {});
-}
+const mainGrid    = document.getElementById('main-grid');
 
 /* ── Input Validation (Red Underline on Blur) ── */
 const validateInputs = [fDate, fTime, cityInput];
@@ -294,7 +288,6 @@ function hideSuggestions() {
   cityDropdown.hidden = true;
   cityDropdown.innerHTML = '';
 }
-
 async function selectCity(item) {
   cityInput.value = item.shortName;
   fLat.value = item.lat;
@@ -303,22 +296,52 @@ async function selectCity(item) {
   locStatus.hidden = true;
   cityInput.classList.add('city-selected');
   await fetchTimezone(item.lat, item.lon);
+
+  // Trigger preview update if date and time are already set
+  if (fDate.value && fTime.value) {
+    const [y, mo, d] = fDate.value.split('-').map(Number);
+    if (y && mo && d) tryLiveAsc(y, mo, d);
+  }
 }
 
 document.addEventListener('click', e => {
   if (!e.target.closest('.sentence-city')) hideSuggestions();
 });
 
+/* ── Historical UTC offset using Intl (accounts for DST in the birth year) ── */
+function getHistoricalUtcOffset(y, mo, d, localH, tzName) {
+  if (!tzName) return null;
+  try {
+    const approxUtc = new Date(Date.UTC(y, mo - 1, d, Math.floor(localH), Math.round((localH % 1) * 60)));
+    const parts = new Intl.DateTimeFormat('en', {
+      timeZone: tzName, timeZoneName: 'shortOffset', hour12: false
+    }).formatToParts(approxUtc);
+    const tzStr = parts.find(p => p.type === 'timeZoneName')?.value || '';
+    const m = tzStr.match(/GMT([+-])(\d+)(?::(\d+))?/);
+    if (!m) return null;
+    return (m[1] === '+' ? 1 : -1) * (parseInt(m[2]) + parseInt(m[3] || '0') / 60);
+  } catch { return null; }
+}
+
 /* ── Timezone detection ── */
 async function fetchTimezone(lat, lon) {
+  if (locStatus) { locStatus.hidden = false; locStatus.textContent = 'Detecting timezone…'; }
   try {
     const r = await fetch(`/api/timezone?lat=${lat}&lon=${lon}`);
     const data = await r.json();
-    if (data.utcOffset != null) {
-      if (fUtc) fUtc.value = data.utcOffset;
+    if (data.utcOffset != null && fUtc) fUtc.value = data.utcOffset;
+    if (data.timeZone && fTz) {
+      fTz.value = data.timeZone;
+      if (locStatus) {
+        const sign = data.utcOffset >= 0 ? '+' : '';
+        locStatus.textContent = `${data.timeZone} (UTC${sign}${data.utcOffset})`;
+      }
+    } else if (locStatus) {
+      locStatus.textContent = 'Timezone detected';
     }
   } catch {
     console.warn("Timezone fetch failed");
+    if (locStatus) locStatus.textContent = 'Timezone auto-detect unavailable — check UTC offset';
   }
 }
 
@@ -363,8 +386,11 @@ calcForm.addEventListener('submit', async e => {
     const d   = parseInt(dayStr, 10);
     const lat = parseFloat(fLat.value);
     const lon = parseFloat(fLon.value);
-    const utc = fUtc && fUtc.value ? parseFloat(fUtc.value) : 0;
-    let hUT   = parseInt(hStr, 10) + parseInt(mStr, 10) / 60 - utc;
+    const localH = parseInt(hStr, 10) + parseInt(mStr, 10) / 60;
+    const tzName = fTz?.value || '';
+    const historicalUtc = getHistoricalUtcOffset(y, mo, d, localH, tzName);
+    const utc = historicalUtc ?? (fUtc && fUtc.value ? parseFloat(fUtc.value) : 0);
+    let hUT   = localH - utc;
 
     // Roll day boundaries
     let yd = d, ym = mo, yy = y;
@@ -382,13 +408,22 @@ calcForm.addEventListener('submit', async e => {
   }
 });
 
+/* ── Google Sheets email capture ── */
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzm8lmyb4sYAPbz8jlvBkmVa6kuUqzAL4poFpP9mljFp9qDjVr0bGolGwVgW4JdNhL_fg/exec';
+
+function captureEmail(email) {
+  if (!email || !SHEETS_URL) return;
+  fetch(`${SHEETS_URL}?email=${encodeURIComponent(email)}`, { mode: 'no-cors' }).catch(() => {});
+}
+
 /* ── Progressive wheel reveal ── */
 let progressiveTimer = null;
 
-function showWheelPreview(planets, cusps, animate = false) {
+function showWheelPreview(planets, cusps, animate = false, ascLon = null, mcLon = null) {
+  if (mainGrid) mainGrid.classList.add('has-results');
   wheelPanel.hidden = false;
   if (signIntro) signIntro.hidden = true;
-  renderWheel(null, planets, cusps, animate);
+  renderWheel(ascLon, mcLon, planets, cusps, animate);
 }
 
 fDate.addEventListener('input', () => {
@@ -428,10 +463,13 @@ fTime.addEventListener('input', () => {
 });
 
 function tryLiveAsc(y, mo, d) {
-  if (!fTime.value || !fLat.value || !fUtc.value) return;
+  if (!fTime.value || !fLat.value) return;
   const [hStr, mStr] = fTime.value.split(':');
-  const utc = parseFloat(fUtc.value);
-  let hUT = parseInt(hStr, 10) + parseInt(mStr, 10) / 60 - utc;
+  const localH = parseInt(hStr, 10) + parseInt(mStr, 10) / 60;
+  const tzName = fTz?.value || '';
+  const historicalUtc = getHistoricalUtcOffset(y, mo, d, localH, tzName);
+  const utc = historicalUtc ?? (fUtc?.value ? parseFloat(fUtc.value) : 0);
+  let hUT = localH - utc;
   const lat = parseFloat(fLat.value);
   const lon = parseFloat(fLon.value);
 
@@ -442,16 +480,17 @@ function tryLiveAsc(y, mo, d) {
   try {
     const jd     = julianDay(yy, ym, yd, hUT);
     const ascLon = calcAscendant(jd, lat, lon);
+    const mcLon  = calcMC(jd, lon);
     const cusps  = wholeSignCusps(ascLon);
     const planets = calcPlanets(jd);
-    showWheelPreview(planets, cusps, true);
+    showWheelPreview(planets, cusps, true, ascLon, mcLon);
   } catch {}
 }
 
 /* ── Display result ── */
 function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   // 1. Render Wheel (final, oriented with ASC marker)
-  renderWheel(ascendant.longitude, planets || {}, cusps || [], true);
+  renderWheel(ascendant.longitude, midheaven?.longitude ?? null, planets || {}, cusps || [], true);
 
   // Helper to map a sign to its CSS elemental color class
   const getElementClass = (signName) => {
@@ -483,7 +522,7 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   if (birthDetailsEl) {
     const [yr, mo2, dy] = fDate.value.split('-');
     const dateStr = `${dy}/${mo2}/${yr}`;
-    birthDetailsEl.textContent = `${cityInput.value} · ${dateStr} · ${fTime.value}`;
+    birthDetailsEl.textContent = `Your Birth Details: ${cityInput.value} · ${dateStr} · ${fTime.value}`;
   }
 
   // 4. Render Big Three Summary Sentence
@@ -493,9 +532,9 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
     const sunClass = getElementClass(planets.sun.sign);
     const moonClass = getElementClass(planets.moon.sign);
 
-    summaryEl.innerHTML = `Your ASCENDANT ${CUSTOM_ICONS.ascendant} is in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
-    <br> Your SUN ${CUSTOM_ICONS.sun} is in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
-    <br> Your MOON ${CUSTOM_ICONS.moon} is in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
+    summaryEl.innerHTML = `ASCENDANT ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
+    <br> SUN ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
+    <br> MOON ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
   }
 
   // 4. Render Placement List
@@ -546,6 +585,7 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   formPanel.hidden  = true;
   analysisCol.hidden = false;
   wheelPanel.hidden  = false;
+  if (mainGrid) mainGrid.classList.add('has-results');
   if (signIntro) signIntro.hidden = true;
 }
 
@@ -558,83 +598,532 @@ btnRecalc.addEventListener('click', () => {
   analysisCol.hidden = true;
   formPanel.hidden   = false;
   wheelPanel.hidden  = true;
-  if (signIntro) signIntro.hidden = false;
+  if (mainGrid) mainGrid.classList.remove('has-results');
   formPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-/* ── Zodiac wheel (AstroChart) ── */
-/* ── Chart Rendering Settings ── */
-const AC_SETTINGS = {
-  COLOR_BACKGROUND:       '#fafafa',  
-  CIRCLE_COLOR:           '#111111',  
-  LINE_COLOR:             '#111111',  
-  CUSPS_STROKE:           1.0,
-  CUSPS_FONT_COLOR:       '#111111',
-  POINTS_COLOR:           '#111111',  
-  POINTS_TEXT_SIZE:       10,
-  POINTS_STROKE:          1.5,
-  SIGNS_COLOR:            '#111111',
-  SIGNS_STROKE:           1.2,
-  SYMBOL_SCALE:           1,
-  SYMBOL_AXIS_FONT_COLOR: '#111111',
-  SYMBOL_AXIS_STROKE:     1.4,
-  MARGIN:                 50,
-  PADDING:                15,
-  SHOW_DIGNITIES_TEXT:    false,
-  COLLISION_RADIUS:       12,
-  
-  /* Elemental Colors: Fire (Red), Earth (Green), Air (Purple), Water (Blue) */
-  COLORS_SIGNS: [
-    '#e87474', /* Aries (Fire) */
-    '#74ba82', /* Taurus (Earth) */
-    '#a084c7', /* Gemini (Air) */
-    '#79a3db', /* Cancer (Water) */
-    '#e87474', /* Leo (Fire) */
-    '#74ba82', /* Virgo (Earth) */
-    '#a084c7', /* Libra (Air) */
-    '#79a3db', /* Scorpio (Water) */
-    '#e87474', /* Sagittarius (Fire) */
-    '#74ba82', /* Capricorn (Earth) */
-    '#a084c7', /* Aquarius (Air) */
-    '#79a3db'  /* Pisces (Water) */
-  ],
-  
-  ASPECTS: {
-    conjunction: { degree:   0, orbit: 8, color: 'transparent' }, 
-    sextile:     { degree:  60, orbit: 5, color: '#dddddd' }, 
-    square:      { degree:  90, orbit: 7, color: '#111111' }, 
-    trine:       { degree: 120, orbit: 7, color: '#dddddd' }, 
-    opposition:  { degree: 180, orbit: 8, color: '#111111' }, 
-  },
+/* ── Zodiac wheel (Canvas) ── */
+const W_SIGN_PATHS = [
+  ["M12 5a5 5 0 1 0 -4 8","M16 13a5 5 0 1 0 -4 -8","M12 21l0 -16"],
+  ["M6 3a6 6 0 0 0 12 0","M6 15a6 6 0 1 0 12 0a6 6 0 1 0 -12 0"],
+  ["M3 3a21 21 0 0 0 18 0","M3 21a21 21 0 0 1 18 0","M7 4.5l0 15","M17 4.5l0 15"],
+  ["M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M15 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M3 12a10 6.5 0 0 1 14 -6.5","M21 12a10 6.5 0 0 1 -14 6.5"],
+  ["M13 17a4 4 0 1 0 8 0","M3 16a3 3 0 1 0 6 0a3 3 0 1 0 -6 0","M7 7a4 4 0 1 0 8 0a4 4 0 1 0 -8 0","M7 7c0 3 2 5 2 9","M15 7c0 4 -2 6 -2 10"],
+  ["M3 4a2 2 0 0 1 2 2v9","M5 6a2 2 0 0 1 4 0v9","M9 6a2 2 0 0 1 4 0v10a7 5 0 0 0 7 5","M12 21a7 5 0 0 0 7 -5v-2a3 3 0 0 0 -6 0"],
+  ["M5 20l14 0","M5 17h5v-.3a7 7 0 1 1 4 0v.3h5"],
+  ["M3 4a2 2 0 0 1 2 2v9","M5 6a2 2 0 0 1 4 0v9","M9 6a2 2 0 0 1 4 0v10a3 3 0 0 0 3 3h5","M18 22l3 -3m-3 3l3 3"],
+  ["M4 20l16 -16","M13 4h7v7","M6.5 12.5l5 5"],
+  ["M4 4a3 3 0 0 1 3 3v9","M7 7a3 3 0 0 1 6 0v11a3 3 0 0 1 -3 3","M16 17a3 3 0 1 0 0.001 0"],
+  ["M3 10l3 -3l3 3l3 -3l3 3l3 -3l3 3","M3 17l3 -3l3 3l3 -3l3 3l3 -3l3 3"],
+  ["M5 3a21 21 0 0 1 0 18","M19 3a21 21 0 0 0 0 18","M5 12l14 0"],
+];
+const W_ELEM_COLOR = {
+  fire:[235,65,40], earth:[45,175,70], air:[120,80,228], water:[45,118,222]
 };
+const W_ELEM_LIGHT = {
+  fire:[242,80,52], earth:[58,188,82], air:[132,92,238], water:[58,128,232]
+};
+const W_PLANET_COLOR = {
+  sun:[240,185,70], moon:[190,210,240], mercury:[130,190,140], venus:[215,140,165],
+  mars:[200,80,65], jupiter:[215,150,80], saturn:[175,155,100],
+  uranus:[100,195,210], neptune:[85,120,195], pluto:[160,100,175],
+};
+const W_ELEMENTS = ['fire','earth','air','water','fire','earth','air','water','fire','earth','air','water'];
 
-function renderWheel(ascLon, planets, cusps, animate = false) {
-  const container = document.getElementById('zodiac-wheel');
+const W_ASPECTS = [
+  { deg:0,   orb:8,  rgb:[160,160,160], label:'conjunction'  },
+  { deg:60,  orb:5,  rgb:[100,180,130], label:'sextile'      },
+  { deg:90,  orb:7,  rgb:[180,80,80],   label:'square'       },
+  { deg:120, orb:7,  rgb:[80,140,210],  label:'trine'        },
+  { deg:180, orb:8,  rgb:[140,80,180],  label:'opposition'   },
+];
+
+function _parseSvgPath(d) {
+  const cmds = [];
+  const re = /([MmLlCcQqAaHhVvZzSsTt])([^MmLlCcQqAaHhVvZzSsTt]*)/g;
+  let m;
+  while ((m = re.exec(d)) !== null) {
+    const cmd = m[1];
+    const nums = (m[2].match(/-?[\d.]+(?:e[+-]?\d+)?/gi) || []).map(Number);
+    cmds.push({ cmd, nums });
+  }
+  return cmds;
+}
+
+function _tracePathCmds(ctx, cmds, sx, sy) {
+  let cx = 0, cy = 0;
+  for (const { cmd, nums } of cmds) {
+    switch (cmd) {
+      case 'M': ctx.moveTo(nums[0]*sx, nums[1]*sy); cx=nums[0]; cy=nums[1]; break;
+      case 'm': ctx.moveTo((cx+nums[0])*sx, (cy+nums[1])*sy); cx+=nums[0]; cy+=nums[1]; break;
+      case 'L': ctx.lineTo(nums[0]*sx, nums[1]*sy); cx=nums[0]; cy=nums[1]; break;
+      case 'l': for(let i=0;i<nums.length;i+=2){cx+=nums[i];cy+=nums[i+1];ctx.lineTo(cx*sx,cy*sy);} break;
+      case 'H': ctx.lineTo(nums[0]*sx, cy*sy); cx=nums[0]; break;
+      case 'h': cx+=nums[0]; ctx.lineTo(cx*sx, cy*sy); break;
+      case 'V': ctx.lineTo(cx*sx, nums[0]*sy); cy=nums[0]; break;
+      case 'v': cy+=nums[0]; ctx.lineTo(cx*sx, cy*sy); break;
+      case 'C': for(let i=0;i<nums.length;i+=6){ctx.bezierCurveTo(nums[i]*sx,nums[i+1]*sy,nums[i+2]*sx,nums[i+3]*sy,nums[i+4]*sx,nums[i+5]*sy);cx=nums[i+4];cy=nums[i+5];} break;
+      case 'c': for(let i=0;i<nums.length;i+=6){ctx.bezierCurveTo((cx+nums[i])*sx,(cy+nums[i+1])*sy,(cx+nums[i+2])*sx,(cy+nums[i+3])*sy,(cx+nums[i+4])*sx,(cy+nums[i+5])*sy);cx+=nums[i+4];cy+=nums[i+5];} break;
+      case 'Q': ctx.quadraticCurveTo(nums[0]*sx,nums[1]*sy,nums[2]*sx,nums[3]*sy); cx=nums[2];cy=nums[3]; break;
+      case 'q': ctx.quadraticCurveTo((cx+nums[0])*sx,(cy+nums[1])*sy,(cx+nums[2])*sx,(cy+nums[3])*sy); cx+=nums[2];cy+=nums[3]; break;
+      case 'A': case 'a': {
+        const rel = cmd==='a';
+        for (let i=0;i<nums.length;i+=7) {
+          const rx=nums[i]*sx, ry=nums[i+1]*sy, xRot=nums[i+2]*Math.PI/180;
+          const largeArc=!!nums[i+3], sweep=!!nums[i+4];
+          const ex=rel?cx+nums[i+5]:nums[i+5], ey=rel?cy+nums[i+6]:nums[i+6];
+          _arcTo(ctx, cx*sx, cy*sy, ex*sx, ey*sy, rx, ry, xRot, largeArc, sweep);
+          cx=ex; cy=ey;
+        }
+        break;
+      }
+      case 'Z': case 'z': ctx.closePath(); break;
+    }
+  }
+}
+
+function _arcTo(ctx, x1, y1, x2, y2, rx, ry, xRot, largeArc, sweep) {
+  const cos = Math.cos(xRot), sin = Math.sin(xRot);
+  const dx = (x1-x2)/2, dy = (y1-y2)/2;
+  const px = cos*dx + sin*dy, py = -sin*dx + cos*dy;
+  let sq = Math.max(0, (rx*rx*ry*ry - rx*rx*py*py - ry*ry*px*px) / (rx*rx*py*py + ry*ry*px*px));
+  sq = Math.sqrt(sq) * (largeArc===sweep ? -1 : 1);
+  const cpx = sq*rx*py/ry, cpy = -sq*ry*px/rx;
+  const cx0 = cos*cpx - sin*cpy + (x1+x2)/2;
+  const cy0 = sin*cpx + cos*cpy + (y1+y2)/2;
+  const a1 = Math.atan2((py-cpy)/ry, (px-cpx)/rx);
+  let da = Math.atan2((-py-cpy)/ry, (-px-cpx)/rx) - a1;
+  if (!sweep && da>0) da -= 2*Math.PI;
+  if (sweep && da<0) da += 2*Math.PI;
+  ctx.ellipse(cx0, cy0, rx, ry, xRot, a1, a1+da, !sweep);
+}
+
+function _drawSignGlyph(ctx, signIdx, cx, cy, size) {
+  const paths = W_SIGN_PATHS[signIdx];
+  const scale = size / 24;
+  ctx.save();
+  ctx.translate(cx - 12*scale, cy - 12*scale);
+  ctx.beginPath();
+  for (const d of paths) _tracePathCmds(ctx, _parseSvgPath(d), scale, scale);
+  ctx.restore();
+}
+
+function _drawPlanetGlyph(ctx, key, cx, cy, size) {
+  const glyph = PLANET_GLYPHS[key];
+  if (!glyph) return;
+  ctx.font = `${size}px serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(glyph, cx, cy);
+}
+
+function _buildSignOverlaySvg(W, ascLon) {
+  const BASE = (ascLon ?? 0);
+  const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
+  const cx = W / 2, cy = W / 2;
+  const M = W;
+
+  const rSign = M * 0.305;
+  const rBand = M * 0.378;
+  const rArc  = rSign + (rBand - rSign) * 0.52;
+
+  const ascSignIdx = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) : -1;
+  const fontSize = M * 0.022;
+
+  let defs = '', textEls = '';
+
+  for (let i = 0; i < 12; i++) {
+    // a1 > a2 always: higher ecliptic lon → smaller toA angle
+    const a1 = toA(i * 30);
+    const a2 = toA(i * 30 + 30);
+    const midAng = toA(i * 30 + 15);
+    const isTop = Math.sin(midAng) < 0;
+
+    const x1 = cx + Math.cos(a1) * rArc;
+    const y1 = cy + Math.sin(a1) * rArc;
+    const x2 = cx + Math.cos(a2) * rArc;
+    const y2 = cy + Math.sin(a2) * rArc;
+
+    // Top half: CW from a2→a1 (sweep=1) gives L→R tangent at the top
+    // Bottom half: CCW from a1→a2 (sweep=0) gives L→R tangent at the bottom
+    const d = isTop
+      ? `M ${x2.toFixed(2)},${y2.toFixed(2)} A ${rArc.toFixed(2)},${rArc.toFixed(2)} 0 0,1 ${x1.toFixed(2)},${y1.toFixed(2)}`
+      : `M ${x1.toFixed(2)},${y1.toFixed(2)} A ${rArc.toFixed(2)},${rArc.toFixed(2)} 0 0,0 ${x2.toFixed(2)},${y2.toFixed(2)}`;
+
+    const hi = (i === ascSignIdx);
+    const [r, g, b] = W_ELEM_LIGHT[W_ELEMENTS[i]];
+    const fill = hi ? `rgb(${r},${g},${b})` : `rgba(${r},${g},${b},0.78)`;
+    const weight = hi ? 'bold' : 'normal';
+    const dy = isTop ? '-2' : '6';
+
+    defs += `<path id="sa${i}" d="${d}"/>`;
+    textEls += `<text dy="${dy}"><textPath startOffset="50%" href="#sa${i}" `
+      + `style="text-anchor:middle;font-size:${fontSize.toFixed(1)}px;letter-spacing:0.07em;`
+      + `font-family:'Space Mono',monospace;fill:${fill};font-weight:${weight}">`
+      + `${SIGN_NAMES[i].toUpperCase()}</textPath></text>`;
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${W}" `
+    + `style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none">`
+    + `<defs>${defs}</defs>${textEls}</svg>`;
+}
+
+let _lastWheelParams  = null;
+let _wheelObserver    = null;
+let _wheelTimer       = null;
+let _gridTransitionCb = null;  // pending transitionend listener
+
+function _paintWheel(container, ascLon, mcLon, planets, cusps, animate) {
+  const dpr = window.devicePixelRatio || 1;
+  const W   = container.offsetWidth;
+
   container.innerHTML = '';
+  container.style.position = 'relative';
+  container.style.transform = '';
 
-  const KEY_MAP = {
-    sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus',
-    mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn',
-    uranus: 'Uranus', neptune: 'Neptune', pluto: 'Pluto'
-  };
-  const acPlanets = {};
-  for (const [key, pos] of Object.entries(planets)) {
-    if (pos && KEY_MAP[key]) acPlanets[KEY_MAP[key]] = [pos.longitude];
-  }
-  // Add ASC marker when we have a real ascendant (not neutral preview)
-  if (ascLon != null) {
-    acPlanets['As'] = [ascLon];
-  }
+  const canvas = document.createElement('canvas');
+  canvas.width  = W * dpr;
+  canvas.height = W * dpr;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = W + 'px';
+  canvas.style.display = 'block';
+  container.appendChild(canvas);
 
-  const size = Math.min(container.offsetWidth || 600, 600);
-  const chart = new astrochart.Chart('zodiac-wheel', size, size, AC_SETTINGS);
-  const radix = chart.radix({ planets: acPlanets, cusps });
-  radix.aspects();
+  const svgWrap = document.createElement('div');
+  svgWrap.innerHTML = _buildSignOverlaySvg(W, ascLon);
+  container.appendChild(svgWrap.firstChild);
 
   if (animate) {
     container.classList.remove('wheel-appear');
-    void container.offsetWidth; // force reflow to restart animation
+    void container.offsetWidth;
     container.classList.add('wheel-appear');
+  }
+
+  _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr);
+}
+
+function renderWheel(ascLon, mcLon, planets, cusps, animate = false) {
+  clearTimeout(_wheelTimer);
+  // Cancel any previously registered transitionend listener
+  if (_gridTransitionCb) {
+    document.getElementById('main-grid')?.removeEventListener('transitionend', _gridTransitionCb);
+    _gridTransitionCb = null;
+  }
+  _lastWheelParams = { ascLon, mcLon, planets, cusps, animate };
+
+  const container = document.getElementById('zodiac-wheel');
+  const W = container.offsetWidth;
+
+  if (W < 50) {
+    // Grid is mid-transition — render exactly when the column animation ends
+    const grid = document.getElementById('main-grid');
+    _gridTransitionCb = (e) => {
+      if (e.propertyName !== 'grid-template-columns') return;
+      grid.removeEventListener('transitionend', _gridTransitionCb);
+      _gridTransitionCb = null;
+      const p = _lastWheelParams;
+      if (p) renderWheel(p.ascLon, p.mcLon, p.planets, p.cusps, p.animate);
+    };
+    grid.addEventListener('transitionend', _gridTransitionCb);
+    return;
+  }
+
+  _paintWheel(container, ascLon, mcLon, planets, cusps, animate);
+
+  // Set up resize observer once, after first successful paint
+  if (!_wheelObserver) {
+    _wheelObserver = new ResizeObserver(() => {
+      clearTimeout(_wheelTimer);
+      _wheelTimer = setTimeout(() => {
+        const p = _lastWheelParams;
+        if (!p) return;
+        const c = document.getElementById('zodiac-wheel');
+        if (c.offsetWidth >= 50) _paintWheel(c, p.ascLon, p.mcLon, p.planets, p.cusps, false);
+      }, 120);
+    });
+    _wheelObserver.observe(container);
+  }
+}
+
+function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
+  const ctx = canvas.getContext('2d');
+  const S = canvas.width / dpr;
+  ctx.scale(dpr, dpr);
+
+  const cx = S/2, cy = S/2;
+  const M = S;
+
+  // Radii — bigger zodiac band; planets outside
+  const rCore    = M * 0.080;
+  const rSign    = M * 0.320;
+  const rBand    = M * 0.400;
+  const rTube    = M * 0.438;
+  const rPlanet  = M * 0.462;
+  const rLabel   = M * 0.488;
+
+  const BASE = (ascLon ?? 0);
+  const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
+
+  // ── White background disc ──
+  ctx.save();
+  ctx.fillStyle = '#fafafa';
+  ctx.beginPath();
+  ctx.arc(cx, cy, rLabel * 1.025, 0, 2*Math.PI);
+  ctx.fill();
+  ctx.restore();
+
+  // ── House ring (inner band, same segments as sign ring) ──
+  const cuspLons = (cusps && cusps.length === 12) ? cusps : null;
+  const rHouseOuter = rSign;
+  const rHouseInner = rSign - (rBand - rSign) * 0.5;   // half the sign band width
+  const rHouseLabel = (rHouseOuter + rHouseInner) / 2;
+  const hFontSz = M * 0.016;
+
+  if (cuspLons) {
+    // Sector fills — uniform grey
+    for (let i = 0; i < 12; i++) {
+      const a1 = toA(cuspLons[i]);
+      const a2 = toA(cuspLons[(i + 1) % 12]);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, rHouseOuter, a1, a2, true);
+      ctx.arc(cx, cy, rHouseInner, a2, a1, false);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(17,17,17,0.05)';
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Ring borders
+    ctx.save();
+    ctx.strokeStyle = 'rgba(17,17,17,0.18)';
+    ctx.lineWidth = 0.6;
+    ctx.beginPath(); ctx.arc(cx, cy, rHouseInner, 0, 2 * Math.PI); ctx.stroke();
+    // Spoke lines at each cusp
+    for (let i = 0; i < 12; i++) {
+      const a = toA(cuspLons[i]);
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * rHouseInner, cy + Math.sin(a) * rHouseInner);
+      ctx.lineTo(cx + Math.cos(a) * rHouseOuter, cy + Math.sin(a) * rHouseOuter);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // House numbers
+    ctx.save();
+    ctx.font = `${hFontSz}px 'Space Mono', monospace`;
+    ctx.fillStyle = 'rgba(17,17,17,0.55)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for (let i = 0; i < 12; i++) {
+      const midLon = cuspLons[i] + 15;
+      const midAng = toA(midLon);
+      const lx = cx + Math.cos(midAng) * rHouseLabel;
+      const ly = cy + Math.sin(midAng) * rHouseLabel;
+      ctx.fillText(String(i + 1), lx, ly);
+    }
+    ctx.restore();
+  }
+
+  // ── Sign sector fills ──
+  const ascSignIdx = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) : -1;
+  for (let i = 0; i < 12; i++) {
+    const a1 = toA(i * 30);
+    const a2 = toA(i * 30 + 30);
+    const [r,g,b] = W_ELEM_LIGHT[W_ELEMENTS[i]];
+    const hi = (i === ascSignIdx);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, rBand, a1, a2, true);
+    ctx.arc(cx, cy, rSign, a2, a1, false);
+    ctx.closePath();
+    if (hi) {
+      ctx.shadowColor = `rgba(${r},${g},${b},0.9)`;
+      ctx.shadowBlur = M * 0.06;
+    }
+    ctx.fillStyle = hi ? `rgba(${r},${g},${b},0.48)` : `rgba(${r},${g},${b},0.09)`;
+    ctx.fill();
+    if (hi) {
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // ── Ring borders ──
+  ctx.save();
+  ctx.strokeStyle = 'rgba(17,17,17,0.18)';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.arc(cx, cy, rSign, 0, 2*Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy, rBand, 0, 2*Math.PI); ctx.stroke();
+  ctx.restore();
+
+  // ── Tick marks (rBand → rTube) ──
+  for (let deg = 0; deg < 360; deg++) {
+    const ang = toA(deg);
+    const isBdy = (deg % 30 === 0);
+    const isMaj = (deg % 5  === 0);
+    const base  = rBand + (isBdy ? 0 : (rTube - rBand) * 0.12);
+    const len   = isBdy ? (rTube - rBand) * 0.82 : isMaj ? (rTube - rBand) * 0.48 : (rTube - rBand) * 0.26;
+    ctx.save();
+    ctx.strokeStyle = isBdy ? 'rgba(17,17,17,0.45)' : isMaj ? 'rgba(17,17,17,0.22)' : 'rgba(17,17,17,0.10)';
+    ctx.lineWidth = isBdy ? 0.9 : 0.5;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(ang)*base,       cy + Math.sin(ang)*base);
+    ctx.lineTo(cx + Math.cos(ang)*(base+len), cy + Math.sin(ang)*(base+len));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Metallic tube ring (teal, decorative frame) ──
+  const tubeW = (rTube - rBand) * 0.26;
+  const tubeR = rBand + (rTube - rBand) * 0.76;
+  const tG = ctx.createRadialGradient(cx,cy, tubeR-tubeW*0.55, cx,cy, tubeR+tubeW*0.55);
+  tG.addColorStop(0,   '#1a3838');
+  tG.addColorStop(0.3, '#2a5555');
+  tG.addColorStop(0.5, '#c8ece8');
+  tG.addColorStop(0.7, '#2a5555');
+  tG.addColorStop(1,   '#1a3838');
+  ctx.save();
+  ctx.strokeStyle = tG;
+  ctx.lineWidth = tubeW;
+  ctx.beginPath(); ctx.arc(cx, cy, tubeR, 0, 2*Math.PI); ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(17,17,17,0.22)';
+  ctx.lineWidth = 0.6;
+  ctx.beginPath(); ctx.arc(cx, cy, rTube, 0, 2*Math.PI); ctx.stroke();
+  ctx.restore();
+
+  // ── Planet tick lines (rTube → planet track) ──
+  for (const pos of Object.values(planets)) {
+    if (!pos?.longitude) continue;
+    const ang = toA(pos.longitude);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,50,40,0.7)';
+    ctx.lineWidth = 1.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(ang)*(rBand - M*0.010), cy + Math.sin(ang)*(rBand - M*0.010));
+    ctx.lineTo(cx + Math.cos(ang)*(rPlanet - M*0.018), cy + Math.sin(ang)*(rPlanet - M*0.018));
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // ── Planet glyphs outside zodiac ring, with degree labels ──
+  const placed = [];
+  const PLANET_ORDER = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+  for (const key of PLANET_ORDER) {
+    const pos = planets[key];
+    if (!pos?.longitude) continue;
+    let ang = toA(pos.longitude);
+    const glyphSize = M * 0.054;
+    const minGap = glyphSize * 1.2;
+
+    for (let attempt = 0; attempt < 12; attempt++) {
+      let conflict = false;
+      for (const { a } of placed) {
+        if (2 * rPlanet * Math.sin(Math.abs(ang - a) / 2) < minGap) { conflict = true; break; }
+      }
+      if (!conflict) break;
+      ang += 0.055;
+    }
+    placed.push({ a: ang });
+
+    const gx = cx + Math.cos(ang)*rPlanet;
+    const gy = cy + Math.sin(ang)*rPlanet;
+    const [r,g,b] = W_PLANET_COLOR[key] || [80,80,80];
+
+    ctx.save();
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    _drawPlanetGlyph(ctx, key, gx, gy, glyphSize);
+    ctx.restore();
+
+    // Degree label
+    const degNum = pos.degree ?? Math.floor(pos.longitude % 30);
+    const lx = cx + Math.cos(ang)*rLabel;
+    const ly = cy + Math.sin(ang)*rLabel;
+    ctx.save();
+    ctx.font = `${M*0.019}px 'Space Mono', monospace`;
+    ctx.fillStyle = 'rgba(17,17,17,0.60)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${degNum}°`, lx, ly);
+    ctx.restore();
+  }
+
+  // ── ASC glow + label ──
+  if (ascLon !== null && typeof ascLon === 'number') {
+    const ascAng = toA(ascLon);
+    const glowX = cx + Math.cos(ascAng) * rSign;
+    const glowY = cy + Math.sin(ascAng) * rSign;
+    const glowR = M * 0.11;
+    const glow = ctx.createRadialGradient(glowX, glowY, 0, glowX, glowY, glowR);
+    glow.addColorStop(0,    'rgba(255,255,200,0.55)');
+    glow.addColorStop(0.35, 'rgba(255,230,100,0.28)');
+    glow.addColorStop(1,    'rgba(255,210,80,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(glowX, glowY, glowR, 0, 2 * Math.PI);
+    ctx.fillStyle = glow;
+    ctx.fill();
+    ctx.restore();
+
+    const lx = cx + Math.cos(ascAng)*(rSign * 0.78);
+    const ly = cy + Math.sin(ascAng)*(rSign * 0.78);
+    ctx.save();
+    ctx.font = `bold ${M*0.020}px 'Space Mono', monospace`;
+    ctx.fillStyle = 'rgba(17,17,17,0.65)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('ASCENDANT', lx, ly);
+    ctx.restore();
+  }
+
+  // ── MC label ──
+  if (mcLon !== null && typeof mcLon === 'number') {
+    const mcAng = toA(mcLon);
+    const lx = cx + Math.cos(mcAng)*(rSign - M*0.012);
+    const ly = cy + Math.sin(mcAng)*(rSign - M*0.012);
+    ctx.save();
+    ctx.font = `bold ${M*0.020}px 'Space Mono', monospace`;
+    ctx.fillStyle = 'rgba(17,17,17,0.45)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('MC', lx, ly);
+    ctx.restore();
+  }
+
+  // ── Center disc + rising sign glyph ──
+  ctx.save();
+  ctx.fillStyle = '#fafafa';
+  ctx.beginPath();
+  ctx.arc(cx, cy, rCore, 0, 2*Math.PI);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(17,17,17,0.25)';
+  ctx.lineWidth = 0.7;
+  ctx.beginPath();
+  ctx.arc(cx, cy, rCore, 0, 2*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+
+  if (ascSignIdx >= 0) {
+    const glyphSize = rCore * 1.05;
+    const [r,g,b] = W_ELEM_LIGHT[W_ELEMENTS[ascSignIdx]];
+    ctx.save();
+    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+    ctx.lineWidth = 1.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    _drawSignGlyph(ctx, ascSignIdx, cx, cy, glyphSize * 2);
+    ctx.stroke();
+    ctx.restore();
   }
 }
 

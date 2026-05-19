@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "build": "esbuild public/app.js --bundle=false --minify --outfile=public/app.js && esbuild public/style.css --minify --outfile=public/style.css"
+    "build": "esbuild public/app.js --bundle=false --minify --allow-overwrite --outfile=public/app.js && esbuild public/style.css --minify --allow-overwrite --outfile=public/style.css"
   },
   "engines": {
     "node": ">=18.0.0"

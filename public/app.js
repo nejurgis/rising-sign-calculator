@@ -564,7 +564,7 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
     const sunClass = getElementClass(planets.sun.sign);
     const moonClass = getElementClass(planets.moon.sign);
 
-    summaryEl.innerHTML = `Ascendant ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
+    summaryEl.innerHTML = `Ascendant / Rising ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
     <br> Sun ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
     <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
   }
@@ -622,7 +622,46 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   wheelPanel.hidden  = false;
   if (mainGrid) mainGrid.classList.add('has-results');
   if (signIntro) signIntro.hidden = true;
+
+  _placeMobileWheel();
 }
+
+// ── Mobile wheel positioning ──
+// On mobile the right-panel is moved to sit between #big-three-summary and
+// #placement-list so CSS sticky kicks in as the user scrolls the placements.
+let _rightPanelAnchor = null; // original next sibling in app-grid
+
+function _placeMobileWheel() {
+  const mq = window.matchMedia('(max-width: 820px)');
+  const rightPanel = document.querySelector('.right-panel');
+  const summary    = document.getElementById('big-three-summary');
+  if (!rightPanel || !summary) return;
+
+  if (mq.matches) {
+    if (!_rightPanelAnchor) _rightPanelAnchor = rightPanel.nextSibling;
+    summary.insertAdjacentElement('afterend', rightPanel);
+  }
+}
+
+function _restoreMobileWheel() {
+  const rightPanel = document.querySelector('.right-panel');
+  if (!rightPanel || !_rightPanelAnchor) return;
+  mainGrid.insertBefore(rightPanel, _rightPanelAnchor);
+  _rightPanelAnchor = null;
+}
+
+// Re-position wheel when viewport crosses the 820px breakpoint
+window.matchMedia('(max-width: 820px)').addEventListener('change', e => {
+  if (e.matches) {
+    // Switched to mobile — place wheel if results are visible
+    if (!document.getElementById('analysis-col').hidden) _placeMobileWheel();
+  } else {
+    // Switched to desktop — restore wheel to grid and repaint at new size
+    _restoreMobileWheel();
+    const p = _lastWheelParams;
+    if (p) renderWheel(p.ascLon, p.mcLon, p.planets, p.cusps, false);
+  }
+});
 
 function formatDegree({ degree, minute, sign }) {
   return `${degree}° ${String(minute).padStart(2, '0')}′ ${sign}`;
@@ -630,6 +669,7 @@ function formatDegree({ degree, minute, sign }) {
 
 /* ── Recalculate ── */
 btnRecalc.addEventListener('click', () => {
+  _restoreMobileWheel();
   analysisCol.hidden = true;
   formPanel.hidden   = false;
   wheelPanel.hidden  = true;
@@ -743,10 +783,16 @@ function _drawSignGlyph(ctx, signIdx, cx, cy, size) {
   ctx.restore();
 }
 
+// Per-glyph scale so all symbols appear the same visual weight
+const GLYPH_SCALE = {
+  sun: 1.30, moon: 0.90, mercury: 0.95, venus: 0.75, mars: 0.8,
+  jupiter: 0.70, saturn: 0.70, uranus: 0.80, neptune: 0.90, pluto: 0.70,
+};
+
 function _drawPlanetGlyph(ctx, key, cx, cy, size) {
   const glyph = PLANET_GLYPHS[key];
   if (!glyph) return;
-  ctx.font = `${size}px serif`;
+  ctx.font = `${size * (GLYPH_SCALE[key] || 1)}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(glyph, cx, cy);
@@ -819,9 +865,10 @@ function _paintWheel(container, ascLon, mcLon, planets, cusps, animate) {
   const canvas = document.createElement('canvas');
   canvas.width  = W * dpr;
   canvas.height = W * dpr;
-  canvas.style.width  = '100%';
-  canvas.style.height = 'auto';
-  canvas.style.display = 'block';
+  canvas.style.width      = '100%';
+  canvas.style.height     = 'auto';
+  canvas.style.display    = 'block';
+  canvas.style.background = 'transparent';
   container.appendChild(canvas);
 
   const svgWrap = document.createElement('div');
@@ -898,14 +945,6 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
 
   const BASE = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) * 30 : 0;
   const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
-
-  // ── White background disc ──
-  ctx.save();
-  ctx.fillStyle = '#fafafa';
-  ctx.beginPath();
-  ctx.arc(cx, cy, rLabel * 1.025, 0, 2*Math.PI);
-  ctx.fill();
-  ctx.restore();
 
   // ── House ring (inner band, same segments as sign ring) ──
   const cuspLons = (cusps && cusps.length === 12) ? cusps : null;
@@ -1132,8 +1171,10 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
       ctx.save();
       ctx.font = `${M * 0.019}px 'Space Mono', monospace`;
       ctx.fillStyle = 'rgba(17,17,17,0.60)';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      // Align away from canvas edge so labels never clip at boundary
+      const ax = Math.cos(dispAng), ay = Math.sin(dispAng);
+      ctx.textAlign    = ax >  0.4 ? 'right'  : ax < -0.4 ? 'left'   : 'center';
+      ctx.textBaseline = ay >  0.4 ? 'bottom' : ay < -0.4 ? 'top'    : 'middle';
       ctx.fillText(`${degNum}°`, lx, ly);
       ctx.restore();
     }
@@ -1186,13 +1227,6 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
   ctx.restore();
 
   // ── Center disc + rising sign glyph ──
-  ctx.save();
-  ctx.fillStyle = '#fafafa';
-  ctx.beginPath();
-  ctx.arc(cx, cy, rCore, 0, 2*Math.PI);
-  ctx.fill();
-  ctx.restore();
-
   ctx.save();
   ctx.strokeStyle = 'rgba(17,17,17,0.25)';
   ctx.lineWidth = 0.7;

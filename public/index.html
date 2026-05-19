@@ -95,20 +95,29 @@
   }
   </script>
 
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-E3KGF9HM9K"></script>
+  <!-- Google Analytics (lazy — loads 3s after page, off critical path) -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-E3KGF9HM9K');
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var s = document.createElement('script');
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-E3KGF9HM9K';
+        s.async = true;
+        document.head.appendChild(s);
+      }, 3000);
+    });
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://api.fontshare.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -119,6 +128,7 @@
     </div>
   </header>
 
+  <main>
   <section class="app-section">
     <div class="container">
       
@@ -129,7 +139,7 @@
 
           <div id="form-panel">
             <div class="intro-wrapper">
-              <p class="intro-text">The “rising sign” or “ascendant” is the zodiac sign that was on the eastern horizon when and where you were born. <a href="/info" class="btn-info">More Info</a></p>
+              <p class="intro-text">The “rising sign” or “ascendant” is the zodiac sign that was on the eastern horizon when and where you were born. <a href="/info" class="btn-info">About rising signs</a></p>
             </div>
 
             <form id="calc-form" novalidate>
@@ -163,6 +173,7 @@
 
                 <input type="date" id="f-date" name="date" required aria-label="Birth date" min="0100-01-01" max="9999-12-31">
 
+                <span class="lb lb-time"></span>
                 <span class="word">at</span>
 
                 <input type="time" id="f-time" name="time" required aria-label="Birth time">
@@ -198,13 +209,6 @@
             </div>
           </div>
 
-          <div class="about-text">
-            
-            <p>This tool has been made for understanding what are your "big three", using whole-sign house system that's been used by astrologers since ancient times.</p>
-            <p>If you would like to see my other project you can check <a href="https://radio-venus.club" target="_blank" rel="noopener">radio-venus.club</a>.</p>
-            <p>If you'd like to understand what this all means, you can book an astrological consultation with me here: <a href="https://jurgis.info/astrology" target="_blank" rel="noopener">Jurgis.info/astrology</a></p>
-          </div>
-
         </div>
 
         <!-- Right panel: sign nav by default, wheel after data entry -->
@@ -232,9 +236,16 @@
           </div>
         </div>
 
+        <div class="about-text">
+          <p>This tool has been made for understanding what are your "big three", using whole-sign house system that's been used by astrologers since ancient times.</p>
+          <p>If you would like to see my other project you can check <a href="https://radio-venus.club" target="_blank" rel="noopener">radio-venus.club</a>.</p>
+          <p>If you'd like to understand what this all means, you can book an astrological consultation with me here: <a href="https://jurgis.info/astrology" target="_blank" rel="noopener">Jurgis.info/astrology</a></p>
+        </div>
+
       </div>
     </div>
   </section>
+  </main>
 
   <footer class="site-footer">
     <div class="container">
@@ -242,7 +253,7 @@
     </div>
   </footer>
 
-  <script src="vendor/astronomy-engine.js"></script>
-  <script src="app.js"></script>
+  <script src="vendor/astronomy-engine.js" defer></script>
+  <script src="app.js" defer></script>
 </body>
 </html>

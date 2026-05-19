@@ -205,6 +205,9 @@ h2 {
   #wheel-panel {
     transform: none;
   }
+  #zodiac-wheel {
+    width: 100%;
+  }
   /* Button inverts on dark background */
   .btn-calculate {
     background: var(--text);
@@ -428,7 +431,17 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   letter-spacing: 0.05em;
 }
 
-.unknown-time-label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+.unknown-time-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  margin-top: 1rem;
+}
 .unknown-time-label input { accent-color: var(--text); }
 
 .form-footer { 
@@ -623,6 +636,15 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   line-height: 0.85;
 }
 
+.bdb-time-unknown {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-family: var(--ff-mono);
+  text-transform: uppercase;
+}
+
 .bdb-city {
   font-family: var(--ff-mono);
   font-size: 0.6rem;
@@ -637,6 +659,15 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   font-weight: 800;
   color: var(--text-dim);
   margin-bottom: 2rem;
+}
+
+.rising-unknown-note {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .big-three-summary strong {
@@ -672,7 +703,7 @@ img.custom-glyph {
     text-align: left;
     align-items: baseline;
     gap: 0 0.5rem;
-    line-height: 1;
+    line-height: 3;
   }
 
   /* Cancel the 998px rule that puts city alone on its own line */

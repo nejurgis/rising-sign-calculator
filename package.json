@@ -5,14 +5,17 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "build": "esbuild public/app.js --bundle=false --minify --outfile=public/app.js && esbuild public/style.css --minify --outfile=public/style.css"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@astrodraw/astrochart": "^3.0.2",
     "astronomy-engine": "^2.1.19",
     "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.0"
   }
 }

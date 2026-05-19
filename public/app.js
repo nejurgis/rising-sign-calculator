@@ -353,6 +353,11 @@ calcForm.addEventListener('submit', async e => {
   const missing = [];
   
   if (!fDate.value) missing.push('date');
+  else if (fDate.value.split('-')[0].length > 4) {
+    if (formError) formError.textContent = 'Please enter a valid 4-digit year.';
+    fDate.classList.add('invalid-input');
+    return;
+  }
   if (!fTime.value) missing.push('time');
   
   // Custom check for the City Dropdown
@@ -429,7 +434,15 @@ function showWheelPreview(planets, cusps, animate = false, ascLon = null, mcLon 
 fDate.addEventListener('input', () => {
   const v = fDate.value;
   if (!v) return;
-  const [y, mo, d] = v.split('-').map(Number);
+  const parts = v.split('-');
+  if (parts[0].length > 4) {
+    parts[0] = parts[0].slice(0, 4);
+    fDate.value = parts.join('-');
+    return;
+  }
+  fDate.classList.remove('invalid-input');
+  const [yStr] = parts;
+  const y = Number(yStr);
   if (!y || y < 1800 || y > 2200) return;
 
   clearTimeout(progressiveTimer);
@@ -521,8 +534,27 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
   const birthDetailsEl = document.getElementById('birth-details');
   if (birthDetailsEl) {
     const [yr, mo2, dy] = fDate.value.split('-');
-    const dateStr = `${dy}/${mo2}/${yr}`;
-    birthDetailsEl.textContent = `Your Birth Details: ${cityInput.value} · ${dateStr} · ${fTime.value}`;
+    const dateObj = new Date(Number(yr), Number(mo2) - 1, Number(dy));
+    const dow     = dateObj.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+    const month   = dateObj.toLocaleDateString('en-US', { month:   'short' }).toUpperCase();
+    const dayNum  = String(Number(dy));
+    const [hh, mm] = fTime.value.split(':');
+    const h = Number(hh), ampm = h >= 12 ? 'PM' : 'AM';
+    const timePart = `${h % 12 || 12}:${mm}`;
+    const city = cityInput.value;
+    birthDetailsEl.innerHTML = `
+      <div class="bdb-top">
+        <span class="bdb-meta bdb-top-align">${dow}</span>
+        <span class="bdb-day">${dayNum}</span>
+        <span class="bdb-month-year">
+          <span class="bdb-meta">${month}</span>
+          <span class="bdb-meta">${yr}</span>
+        </span>
+        <span class="bdb-time">${timePart}</span>
+        <span class="bdb-meta bdb-top-align">${ampm}</span>
+      </div>
+      ${city ? `<div class="bdb-city">${city}</div>` : ''}
+    `;
   }
 
   // 4. Render Big Three Summary Sentence
@@ -532,9 +564,9 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
     const sunClass = getElementClass(planets.sun.sign);
     const moonClass = getElementClass(planets.moon.sign);
 
-    summaryEl.innerHTML = `ASCENDANT ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
-    <br> SUN ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
-    <br> MOON ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
+    summaryEl.innerHTML = `Ascendant ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>. 
+    <br> Sun ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>. 
+    <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
   }
 
   // 4. Render Placement List
@@ -554,7 +586,8 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
       const iconHtml = CUSTOM_ICONS[bodyKey] || '';
       
       // Capitalize planet names correctly
-      const formattedName = bodyKey.charAt(0).toUpperCase() + bodyKey.slice(1);
+      const NAME_OVERRIDES = { ascendant: 'Ascendant', descendant: 'Descendant', midheaven: 'Midheaven', ic: 'Imum Coeli' };
+      const formattedName = NAME_OVERRIDES[bodyKey] || (bodyKey.charAt(0).toUpperCase() + bodyKey.slice(1));
 
       li.innerHTML = `
         <span class="pi-sign ${elClass}">${signDisplay}</span>
@@ -566,6 +599,7 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
 
     // --- Render "The Big Three" First ---
     if (ascendant) createRow(ascendant.sign, 'ascendant', ascendant);
+    if (ascendant) { const dsc = makeLonInfo(ascendant.longitude + 180); createRow(dsc.sign, 'descendant', dsc); }
     if (planets.sun) createRow(planets.sun.sign, 'sun', planets.sun);
     if (planets.moon) createRow(planets.moon.sign, 'moon', planets.moon);
 
@@ -577,8 +611,9 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }) {
       }
     });
 
-    // Render Midheaven last (Using standard text as there is no provided SVG)
+    // Render Midheaven and IC
     if (midheaven) createRow(midheaven.sign, 'midheaven', midheaven);
+    if (midheaven) { const ic = makeLonInfo(midheaven.longitude + 180); createRow(ic.sign, 'ic', ic); }
   }
 
   // 5. Switch views
@@ -718,7 +753,7 @@ function _drawPlanetGlyph(ctx, key, cx, cy, size) {
 }
 
 function _buildSignOverlaySvg(W, ascLon) {
-  const BASE = (ascLon ?? 0);
+  const BASE = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) * 30 : 0;
   const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
   const cx = W / 2, cy = W / 2;
   const M = W;
@@ -784,8 +819,8 @@ function _paintWheel(container, ascLon, mcLon, planets, cusps, animate) {
   const canvas = document.createElement('canvas');
   canvas.width  = W * dpr;
   canvas.height = W * dpr;
-  canvas.style.width  = W + 'px';
-  canvas.style.height = W + 'px';
+  canvas.style.width  = '100%';
+  canvas.style.height = 'auto';
   canvas.style.display = 'block';
   container.appendChild(canvas);
 
@@ -861,7 +896,7 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
   const rPlanet  = M * 0.462;
   const rLabel   = M * 0.488;
 
-  const BASE = (ascLon ?? 0);
+  const BASE = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) * 30 : 0;
   const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
 
   // ── White background disc ──
@@ -1013,46 +1048,95 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
     ctx.restore();
   }
 
-  // ── Planet glyphs outside zodiac ring, with degree labels ──
-  const placed = [];
+  // ── Planet glyphs: iterative push-apart in longitude space ──
+  // Ticks (above) stay at actual positions; glyphs are spread so they never overlap,
+  // with a thin connector line when a glyph is displaced from its tick.
+  const glyphSize = M * 0.054;
+  const minDegGap = (glyphSize / rPlanet) * (180 / Math.PI) * 1.18; // min glyph separation in °
+
   const PLANET_ORDER = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
+  const rawPl = [];
   for (const key of PLANET_ORDER) {
     const pos = planets[key];
     if (!pos?.longitude) continue;
-    let ang = toA(pos.longitude);
-    const glyphSize = M * 0.054;
-    const minGap = glyphSize * 1.2;
+    rawPl.push({ key, pos, lon: ((pos.longitude % 360) + 360) % 360 });
+  }
+  rawPl.sort((a, b) => a.lon - b.lon);
 
-    for (let attempt = 0; attempt < 12; attempt++) {
-      let conflict = false;
-      for (const { a } of placed) {
-        if (2 * rPlanet * Math.sin(Math.abs(ang - a) / 2) < minGap) { conflict = true; break; }
-      }
-      if (!conflict) break;
-      ang += 0.055;
+  const Np = rawPl.length;
+  if (Np > 0) {
+    // Rotate array so the largest angular gap becomes the boundary — eliminates wrap-around
+    let maxGap = -1, cutIdx = 0;
+    for (let i = 0; i < Np; i++) {
+      const j = (i + 1) % Np;
+      const gap = j > 0 ? rawPl[j].lon - rawPl[i].lon : rawPl[0].lon + 360 - rawPl[Np-1].lon;
+      if (gap > maxGap) { maxGap = gap; cutIdx = j; }
     }
-    placed.push({ a: ang });
+    const pl = [...rawPl.slice(cutIdx), ...rawPl.slice(0, cutIdx)];
 
-    const gx = cx + Math.cos(ang)*rPlanet;
-    const gy = cy + Math.sin(ang)*rPlanet;
-    const [r,g,b] = W_PLANET_COLOR[key] || [80,80,80];
+    // Unwrap display longitudes to be strictly monotonically increasing
+    pl.forEach(p => p.disp = p.lon);
+    for (let i = 1; i < Np; i++) {
+      if (pl[i].disp <= pl[i-1].disp) pl[i].disp += 360;
+    }
 
+    // Iterative simultaneous push-apart (all pushes applied at once per iteration)
+    for (let iter = 0; iter < 80; iter++) {
+      const pushes = new Float64Array(Np);
+      let anyPush = false;
+      for (let i = 0; i < Np - 1; i++) {
+        const gap = pl[i+1].disp - pl[i].disp;
+        if (gap < minDegGap) {
+          const push = (minDegGap - gap) * 0.5;
+          pushes[i] -= push;
+          pushes[i+1] += push;
+          anyPush = true;
+        }
+      }
+      if (!anyPush) break;
+      pl.forEach((p, i) => p.disp += pushes[i]);
+    }
+
+    // Draw connector lines for displaced planets (behind glyphs)
     ctx.save();
-    ctx.fillStyle = `rgb(${r},${g},${b})`;
-    _drawPlanetGlyph(ctx, key, gx, gy, glyphSize);
+    ctx.strokeStyle = 'rgba(17,17,17,0.18)';
+    ctx.lineWidth = 0.6;
+    for (const p of pl) {
+      const dispMod = ((p.disp % 360) + 360) % 360;
+      const diff = Math.abs(dispMod - p.lon);
+      if (Math.min(diff, 360 - diff) < 0.4) continue;
+      const actAng  = toA(p.lon);
+      const dispAng = toA(p.disp);
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(actAng)  * (rPlanet - M * 0.018),
+                 cy + Math.sin(actAng)  * (rPlanet - M * 0.018));
+      ctx.lineTo(cx + Math.cos(dispAng) * (rPlanet - glyphSize * 0.6),
+                 cy + Math.sin(dispAng) * (rPlanet - glyphSize * 0.6));
+      ctx.stroke();
+    }
     ctx.restore();
 
-    // Degree label
-    const degNum = pos.degree ?? Math.floor(pos.longitude % 30);
-    const lx = cx + Math.cos(ang)*rLabel;
-    const ly = cy + Math.sin(ang)*rLabel;
-    ctx.save();
-    ctx.font = `${M*0.019}px 'Space Mono', monospace`;
-    ctx.fillStyle = 'rgba(17,17,17,0.60)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`${degNum}°`, lx, ly);
-    ctx.restore();
+    // Draw glyphs and degree labels at display positions
+    for (const { key, pos, disp } of pl) {
+      const dispAng = toA(disp);
+      const gx = cx + Math.cos(dispAng) * rPlanet;
+      const gy = cy + Math.sin(dispAng) * rPlanet;
+      const [r, g, b] = W_PLANET_COLOR[key] || [80, 80, 80];
+      ctx.save();
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      _drawPlanetGlyph(ctx, key, gx, gy, glyphSize);
+      ctx.restore();
+      const degNum = pos.degree ?? Math.floor(pos.longitude % 30);
+      const lx = cx + Math.cos(dispAng) * rLabel;
+      const ly = cy + Math.sin(dispAng) * rLabel;
+      ctx.save();
+      ctx.font = `${M * 0.019}px 'Space Mono', monospace`;
+      ctx.fillStyle = 'rgba(17,17,17,0.60)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${degNum}°`, lx, ly);
+      ctx.restore();
+    }
   }
 
   // ── ASC glow + label ──
@@ -1083,19 +1167,23 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr) {
     ctx.restore();
   }
 
-  // ── MC label ──
+  // ── MC / IC / DSC labels ──
+  ctx.save();
+  ctx.font = `bold ${M*0.020}px 'Space Mono', monospace`;
+  ctx.fillStyle = 'rgba(17,17,17,0.45)';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   if (mcLon !== null && typeof mcLon === 'number') {
     const mcAng = toA(mcLon);
-    const lx = cx + Math.cos(mcAng)*(rSign - M*0.012);
-    const ly = cy + Math.sin(mcAng)*(rSign - M*0.012);
-    ctx.save();
-    ctx.font = `bold ${M*0.020}px 'Space Mono', monospace`;
-    ctx.fillStyle = 'rgba(17,17,17,0.45)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('MC', lx, ly);
-    ctx.restore();
+    ctx.fillText('MC', cx + Math.cos(mcAng)*(rSign - M*0.012), cy + Math.sin(mcAng)*(rSign - M*0.012));
+    const icAng = toA(mcLon + 180);
+    ctx.fillText('IC', cx + Math.cos(icAng)*(rSign - M*0.012), cy + Math.sin(icAng)*(rSign - M*0.012));
   }
+  if (ascLon !== null && typeof ascLon === 'number') {
+    const dscAng = toA(ascLon + 180);
+    ctx.fillText('DSC', cx + Math.cos(dscAng)*(rSign - M*0.012), cy + Math.sin(dscAng)*(rSign - M*0.012));
+  }
+  ctx.restore();
 
   // ── Center disc + rising sign glyph ──
   ctx.save();

@@ -64,7 +64,7 @@ body {
   line-height: 1;
   -webkit-font-smoothing: antialiased;
   padding: 20px 24px;
-
+  overflow-x: clip;
 }
 
 .container {
@@ -196,13 +196,13 @@ h2 {
 
 .intro-wrapper {
   margin-bottom: 2.5rem;
-  text-align: center;
+  text-align: left;
 }
 
 .intro-text {
   font-family: var(--ff-serif);
   font-size: 1.2rem;
-  line-height: 1.6;
+  line-height: 1.2;
   color: var(--text-dim);
   max-width: 700px;
   margin-inline: auto;
@@ -233,7 +233,6 @@ h2 {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0rem 0.2rem;
   font-size: 1rem;
   line-height: 1.7;
@@ -346,6 +345,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   margin-top: 4px;
   max-height: 250px;
   overflow-y: auto;
+  text-align: left;;
 }
 
 #city-dropdown li {
@@ -374,7 +374,6 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   font-size: 0.65rem;
   color: var(--text-muted);
   margin-top: 0.4rem;
-  text-align: center;
 }
 
 /* ── Meta Data Under Form ── */
@@ -394,7 +393,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .form-footer { 
   margin-top: 1.5rem; 
-  text-align: center;
+  text-align: left;
 }
 #form-error { color: red; padding-left: 10px; font-family: var(--ff-sans); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
 
@@ -430,8 +429,10 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   height: auto !important;
 }
 
-.analysis-col {
+.analysis-col,
+#analysis-col {
   width: 100%;
+  min-width: 0;
 }
 
 .placement-list {
@@ -442,16 +443,16 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .placement-item {
   display: grid;
-  grid-template-columns: 110px 1fr 70px;
+  grid-template-columns: 110px minmax(0, 1fr) 70px;
   align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);
 }
 
 .pi-sign {
-  font-family: var(--ff-sans);
+  font-family: var(--ff-mono);
   font-size: 0.78rem;
-  font-weight: 500;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text);
@@ -460,7 +461,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 .pi-planet {
   font-family: var(--ff-sans);
   font-size: 0.78rem;
-  font-weight: 400;
+  font-weight: 800;
   text-align: center;
   color: var(--text-dim);
 }
@@ -512,7 +513,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   color: var(--text-dim);
   margin-top: 3rem;
   max-width: 400px;
-  line-height: 1.1;
+  line-height: 1.2;
   font-style: italic;
 }
 
@@ -544,24 +545,62 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 }
 
 .birth-details {
-  font-family: var(--ff-mono);
-  font-size: 0.7rem;
-  color: var(--text-muted);
   margin-bottom: 1.5rem;
-  letter-spacing: 0.03em;
+}
+
+.bdb-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  line-height: 1;
+}
+
+.bdb-top-align {
+  margin-top: 0.2rem;
+}
+
+.bdb-month-year {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.1rem;
+}
+
+.bdb-meta {
+  font-family: var(--ff-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.bdb-day,
+.bdb-time {
+  font-family: "Satoshi";
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 0.85;
+}
+
+.bdb-city {
+  font-family: var(--ff-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-top: 0.5rem;
 }
 
 .big-three-summary {
   font-family: var(--ff-sans);
   font-size: 1.05rem;
-  line-height: 1.7;
   color: var(--text-dim);
   margin-bottom: 2rem;
 }
 
 .big-three-summary strong {
-  font-family: var(--ff-sans);
-  font-weight: 500;
+  font-family: var(--ff-mono);
+  font-weight: 800;
   text-transform: uppercase;
   font-size: 0.9em;
   letter-spacing: 0.05em;

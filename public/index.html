@@ -161,14 +161,14 @@
 
                 <span class="word">on</span>
 
-                <input type="date" id="f-date" name="date" required aria-label="Birth date">
+                <input type="date" id="f-date" name="date" required aria-label="Birth date" min="0100-01-01" max="9999-12-31">
 
                 <span class="word">at</span>
 
                 <input type="time" id="f-time" name="time" required aria-label="Birth time">
 
                 <span class="lb lb-email"></span>
-                <span class="word">. My email is</span>
+                <span class="word">My email is</span>
 
                 <input type="email" id="f-email" name="email" placeholder="optional" autocomplete="email" aria-label="Email address">
 
@@ -190,7 +190,7 @@
           </div>
 
           <div id="analysis-col" hidden>
-            <p class="birth-details" id="birth-details"></p>
+            <div class="birth-details" id="birth-details"></div>
             <p class="big-three-summary" id="big-three-summary"></p>
             <ul class="placement-list" id="placement-list"></ul>
             <div class="result-actions">
@@ -238,7 +238,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <p>Astronomy Engine · Whole Sign houses · OpenStreetMap</p>
+      <p> Tropical · Whole Sign houses · Geocentric</p>
     </div>
   </footer>
 

@@ -3,28 +3,28 @@
   src: url('fonts/GaramondNo8-Reg.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: 'GaramondNo8';
   src: url('fonts/GaramondNo8-Ita.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: 'GaramondNo8';
   src: url('fonts/GaramondNo8-Med.ttf') format('truetype');
   font-weight: 500;
   font-style: normal;
-  font-display: swap;
+  font-display: optional;
 }
 @font-face {
   font-family: 'GaramondNo8';
   src: url('fonts/GaramondNo8-MedIta.ttf') format('truetype');
   font-weight: 500;
   font-style: italic;
-  font-display: swap;
+  font-display: optional;
 }
 
 /* ── Tokens ── */
@@ -493,7 +493,7 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
 
 .placement-item {
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr) 70px;
+  grid-template-columns: 110px minmax(0, 1fr) 110px;
   align-items: center;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--border);

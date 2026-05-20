@@ -676,6 +676,13 @@ input[type="time"]:hover::-webkit-calendar-picker-indicator {
   color: var(--text);
 }
 
+.sign-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
 /* New class for your custom Base64 SVGs */
 img.custom-glyph {
   height: 1.1em; /* Scales perfectly with whatever font size the text is */
@@ -790,4 +797,25 @@ img.custom-glyph {
 
 .wheel-appear {
   animation: wheelAppear 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Cross-document page transitions (sign-to-sign navigation) ── */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 120ms ease-in both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 200ms ease-out 120ms both fade-in;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
 }

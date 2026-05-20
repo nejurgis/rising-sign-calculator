@@ -90,7 +90,19 @@
   color: var(--text-muted);
 }
 
-/* Sign nav on rising pages */
+/* Big wheel above the text grid */
+.rising-wheel-hero {
+  display: flex;
+  justify-content: center;
+}
+
+.static-wheel-wrap {
+  width: min(100%, calc((100vh - 3rem) * 0.65));
+  max-width: 560px;
+  aspect-ratio: 1;
+}
+
+/* Sign nav on moon pages */
 .sign-nav--page {
   position: sticky;
   top: 1rem;

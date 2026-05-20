@@ -585,11 +585,11 @@ function showResult({ ascendant, midheaven, houseSystem, planets, cusps }, unkno
 
     summaryEl.innerHTML = unknownTime
       ? `Sun ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>.
-    <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.
+    <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}"><a href="/moon/${planets.moon.sign.toLowerCase()}" class="sign-link">${planets.moon.sign.toUpperCase()}</a></strong>.
     <br><span class="rising-unknown-note">Rising sign requires birth time.</span>`
-      : `Ascendant / Rising ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}">${ascendant.sign.toUpperCase()}</strong>.
+      : `Ascendant / Rising ${CUSTOM_ICONS.ascendant} in <strong class="${ascClass}"><a href="/rising/${ascendant.sign.toLowerCase()}" class="sign-link">${ascendant.sign.toUpperCase()}</a></strong>.
     <br> Sun ${CUSTOM_ICONS.sun} in <strong class="${sunClass}">${planets.sun.sign.toUpperCase()}</strong>.
-    <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}">${planets.moon.sign.toUpperCase()}</strong>.`;
+    <br> Moon ${CUSTOM_ICONS.moon} in <strong class="${moonClass}"><a href="/moon/${planets.moon.sign.toLowerCase()}" class="sign-link">${planets.moon.sign.toUpperCase()}</a></strong>.`;
   }
 
   // 4. Render Placement List

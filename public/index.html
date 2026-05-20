@@ -95,20 +95,23 @@
   }
   </script>
 
-  <!-- Google Analytics (lazy — loads 3s after page, off critical path) -->
+  <!-- Google Analytics (idle — loads only when browser is idle, never during TTI window) -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-E3KGF9HM9K');
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        var s = document.createElement('script');
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=G-E3KGF9HM9K';
-        s.async = true;
-        document.head.appendChild(s);
-      }, 3000);
-    });
+    function _loadGA() {
+      var s = document.createElement('script');
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-E3KGF9HM9K';
+      s.async = true;
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(_loadGA, { timeout: 6000 });
+    } else {
+      setTimeout(_loadGA, 6000);
+    }
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1011,7 +1014,7 @@ img.custom-glyph {
 
         <!-- Right panel: sign nav by default, wheel after data entry -->
         <div class="right-panel">
-          <div id="sign-intro" hidden>
+          <div id="sign-intro">
             <p class="section-label">What's a rising sign?</p>
             <p class="sign-intro-blurb">Your rising sign — or Ascendant — is the zodiac sign that was on the eastern horizon the moment you were born. It shifts every two hours, shaping how others first experience you.</p>
             <nav class="sign-nav" aria-label="Rising sign descriptions">

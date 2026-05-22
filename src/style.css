@@ -1,0 +1,852 @@
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Reg.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: optional;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Ita.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: optional;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-Med.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: optional;
+}
+@font-face {
+  font-family: 'GaramondNo8';
+  src: url('fonts/GaramondNo8-MedIta.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: optional;
+}
+
+/* ── Tokens ── */
+:root {
+  --bg:         #fafafa; /* Co-Star off-white */
+  --bg-card:    #ffffff;
+  --bg-hover:   #f0f0f0;
+  --text:       #111111; /* Co-Star soft black */
+  --text-dim:   #333333;
+  --text-muted: #666666;
+  
+  /* Setting gold to black so legacy HTML classes instantly adapt without rewriting HTML */
+  --gold:       #111111; 
+  --gold-dim:   rgba(17, 17, 17, 0.05);
+  
+  --border:     rgba(17, 17, 17, 0.15); /* Soft hairline border */
+  --border-mid: rgba(17, 17, 17, 0.9);
+  --radius:     0px;
+  
+  --ff-serif:   'GaramondNo8', 'Times New Roman', Times, serif;
+  --ff-sans:    'Satoshi', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --ff-mono:    'Space Mono', monospace;
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-sans);
+  font-size: 16px;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  padding: 20px 24px;
+  overflow-x: clip;
+}
+
+.container {
+  width: min(1200px, 100%);
+  margin-inline: auto;
+}
+
+/* ── Header ── */
+.site-header {
+  padding-bottom: 1.25rem;
+}
+.site-header h1 {
+  display: inline;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.logo {
+  font-family: var(--ff-mono);
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--text);
+}
+
+/* ── Typography Utilities ── */
+.section-label, .calc-label {
+  font-family: var(--ff-sans);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-family: var(--ff-sans);
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-bottom: 3rem;
+  text-transform: uppercase;
+}
+
+/* ── APP GRID (form + wheel side by side) ── */
+.app-section {
+  padding: 0.5rem 0 2rem 0;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 320px 0fr;
+  gap: 0;
+  transition: grid-template-columns 0.9s cubic-bezier(0.4, 0, 0.2, 1), gap 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  align-items: start;
+}
+
+.app-grid.has-results {
+  grid-template-columns: 320px 1fr;
+  gap: 1.5rem;
+}
+
+#form-panel, .left-panel {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.right-panel {
+  overflow: hidden; /* Hide wheel while track is 0 */
+  opacity: 0;
+  transition: opacity 0.6s ease-in-out;
+  position: sticky;
+  top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.app-grid.has-results .right-panel {
+  opacity: 1;
+  overflow: visible;
+}
+
+#wheel-panel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transform: translateX(30px);
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.app-grid.has-results #wheel-panel {
+  transform: translateX(0);
+}
+
+#zodiac-wheel {
+  width: min(100%, calc((100vh - 3rem) * 0.8));
+  height: auto;
+  aspect-ratio: 1;
+  position: relative;
+  overflow: hidden;
+  transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+
+@media (max-width: 820px) {
+  :root {
+    --bg:         #111111;
+    --bg-card:    #1a1a1a;
+    --text:       #f5f5f5;
+    --text-dim:   #cccccc;
+    --text-muted: #888888;
+    --gold:       #f5f5f5;
+    --gold-dim:   rgba(245, 245, 245, 0.05);
+    --border:     rgba(245, 245, 245, 0.18);
+    --border-mid: rgba(245, 245, 245, 0.85);
+  }
+
+  .app-grid, .app-grid.has-results {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .right-panel {
+    position: static;
+    opacity: 1;
+    overflow: visible;
+  }
+  .app-grid.has-results .right-panel {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  #wheel-panel {
+    transform: none;
+  }
+  #zodiac-wheel {
+    width: 100%;
+  }
+  /* Button inverts on dark background */
+  .btn-calculate {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+  .btn-calculate:hover:not(:disabled) {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--text);
+  }
+
+  /* Recalc button */
+  .btn-recalc {
+    border-color: var(--text);
+    color: var(--text);
+  }
+  .btn-recalc:hover {
+    background: var(--text);
+    color: var(--bg);
+  }
+}
+
+/* ── CALCULATOR FORM ── */
+.calculator {
+  padding: 2rem 0 4rem 0;
+}
+
+.intro-wrapper {
+  margin-bottom: 2.5rem;
+  text-align: left;
+}
+
+.intro-text {
+  font-family: var(--ff-serif);
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--text-dim);
+  max-width: 700px;
+  margin-inline: auto;
+}
+
+.btn-info {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--text);
+  font-family: var(--ff-sans);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 20px;
+  -webkit-transition: all 400ms ease;
+  transition: all 400ms ease;
+  white-space: nowrap;
+}
+
+.btn-info:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.birth-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0rem 0.2rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+/* Flex line-break helpers — zero size by default */
+.lb {
+  flex-basis: 0;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+/* > 1405px: 2 lines — break only before email */
+@media (min-width: 1405px) {
+  .lb-email { flex-basis: 100%; }
+}
+
+/* 999px – 1405px: 3 lines — break after city + before email */
+@media (min-width: 999px) and (max-width: 1404px) {
+  .lb-date  { flex-basis: 100%; }
+  .lb-email { flex-basis: 100%; }
+}
+
+/* < 999px: 4 lines — break after intro, after city, before email */
+@media (max-width: 998px) {
+  .lb-city  { flex-basis: 100%; }
+  .lb-date  { flex-basis: 100%; }
+  .lb-email { flex-basis: 100%; }
+}
+
+/* ── Native Inputs Reset ── */
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="email"] {
+  background: transparent;
+  border: none;
+  border-bottom: 1.8px dashed var(--border-mid);
+  border-radius: 0;
+  color: var(--text);
+  font-family: var(--ff-mono);
+  font-size: 0.82rem;
+  height: 21px;
+  padding: 0;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input:focus {
+  border-bottom-color: var(--text);
+  border-bottom-style: solid;
+}
+/* Triggers when JS detects a blurred, empty field */
+input.invalid-input {
+  border-bottom-color: #e07070 !important;
+}
+
+input#city-input.city-selected {
+  border-bottom-style: solid;
+  border-bottom-color: var(--text);
+  text-align: center;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Sizing */
+/* ── Sizing (Updated for wider inputs) ── */
+#city-input { width: 22ch; }
+input[type="date"], #f-date { width: 150px; }
+input[type="time"], #f-time { width: 110px; }
+input[type="email"], #f-email { width: 26ch; }
+
+/* Clean up WebKit native picker icons */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="time"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+/* ── City Autocomplete Dropdown ── */
+.location-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+#city-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg);
+  border: 1px solid var(--text);
+  list-style: none;
+  width: 100%;
+  min-width: 300px;
+  z-index: 100;
+  margin-top: 4px;
+  max-height: 250px;
+  overflow-y: auto;
+  text-align: left;;
+}
+
+#city-dropdown li {
+  padding: 0.1rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--ff-sans);
+  font-size: 0.75rem;
+  color: var(--text);
+  transition: background 0.1s;
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+#city-dropdown li:last-child { border-bottom: none; }
+
+#city-dropdown li:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.sug-primary { display: block; font-weight: bold; }
+.sug-secondary { display: block; font-family: var(--ff-sans); font-size: 0.65rem; opacity: 0.7; }
+
+.location-status {
+  font-family: var(--ff-sans);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 0.4rem;
+}
+
+/* ── Meta Data Under Form ── */
+.meta-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  font-family: var(--ff-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.unknown-time-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  margin-top: 1rem;
+}
+.unknown-time-label input { accent-color: var(--text); }
+
+.form-footer { 
+  margin-top: 1.5rem; 
+  text-align: left;
+}
+#form-error { color: red; padding-left: 10px; font-family: var(--ff-sans); font-size: 0.72rem; margin-bottom: 0.75rem; min-height: 1rem; }
+
+/* Submit Button */
+.btn-calculate {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--text);
+  color: var(--text);
+  font-family: var(--ff-sans);
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.55rem;
+  cursor: pointer;
+  border-radius: 20px;
+  -webkit-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.btn-calculate:hover:not(:disabled) {
+  background: var(--text);
+  color: var(--bg);
+}
+.btn-calculate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ────────────────────────────────────────────
+   WHEEL + ANALYSIS
+──────────────────────────────────────────── */
+#zodiac-wheel svg {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.analysis-col,
+#analysis-col {
+  width: 100%;
+  min-width: 0;
+}
+
+.placement-list {
+  list-style: none;
+  width: 100%;
+  border-top: 1px solid var(--border);
+}
+
+.placement-item {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr) 110px;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.pi-sign {
+  font-family: var(--ff-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.pi-planet {
+  font-family: var(--ff-sans);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.pi-degree {
+  font-family: var(--ff-sans);
+  font-size: 0.7rem;
+  text-align: right;
+  color: var(--text-muted);
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-start;
+  margin-top: 1.5rem;
+}
+
+.btn-recalc {
+  font-family: var(--ff-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  border: 1px solid var(--text);
+  padding: 0.5rem 1.25rem;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 20px;
+  -webkit-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.btn-recalc:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn-share {
+  font-family: var(--ff-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  background: var(--text);
+  border: 1px solid var(--text);
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  border-radius: 20px;
+  -webkit-transition: all 400ms ease;
+  transition: all 400ms ease;
+}
+
+.btn-share:hover {
+  opacity: 0.75;
+}
+
+.btn-share:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+
+/* ── Elemental Colors ── */
+.color-fire  { color: #e87474 !important; }
+.color-earth { color: #74ba82 !important; }
+.color-air   { color: #a084c7 !important; }
+.color-water { color: #79a3db !important; }
+
+/* ── Big Three Summary Sentence ── */
+/* ── Big Three Summary Sentence ── */
+.about-text {
+  font: normal 15.5px/27px 'GaramondNo8', 'Times New Roman', Times, serif;
+  letter-spacing: 0.5px;
+  font-variant-ligatures: none;
+  color: var(--text-dim);
+  margin-top: 3rem;
+  max-width: 400px;
+  line-height: 1.2;
+  font-style: italic;
+}
+
+.about-text p + p,
+.rising-body p + p {
+  text-indent: 65px;
+}
+
+.about-text h2 + p,
+.about-text h3 + p {
+  text-indent: 0;
+}
+
+.about-text a {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.about-text a:hover {
+  color: var(--text);
+}
+
+@media only screen and (max-width: 1024px) {
+  .about-text {
+    font-size: 16px;
+    line-height: 21px;
+  }
+}
+
+.birth-details {
+  margin-bottom: 1.5rem;
+}
+
+.bdb-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  line-height: 1;
+}
+
+.bdb-top-align {
+  margin-top: 0.2rem;
+}
+
+.bdb-month-year {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding-top: 0.1rem;
+}
+
+.bdb-meta {
+  font-family: var(--ff-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.bdb-day,
+.bdb-time {
+  font-family: "Satoshi";
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.03em;
+  line-height: 0.85;
+}
+
+.bdb-time-unknown {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  font-family: var(--ff-mono);
+  text-transform: uppercase;
+}
+
+.bdb-city {
+  font-family: var(--ff-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-top: 0.5rem;
+}
+
+.big-three-summary {
+  font-family: var(--ff-sans);
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-dim);
+  margin-bottom: 2rem;
+}
+
+.rising-unknown-note {
+  font-family: var(--ff-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.big-three-summary strong {
+  font-family: var(--ff-mono);
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
+.sign-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+
+/* New class for your custom Base64 SVGs */
+img.custom-glyph {
+  height: 1.1em; /* Scales perfectly with whatever font size the text is */
+  width: auto;
+  margin: 0 0.3rem;
+  display: inline-block;
+  vertical-align: middle;
+  transform: translateY(-2px); /* Nudges the icon up slightly to sit on the baseline */
+}
+
+/* ────────────────────────────────────────────
+   RESPONSIVE
+──────────────────────────────────────────── */
+@media (max-width: 820px) {
+  .analysis-col {
+    padding: 1rem 0;
+  }
+
+  /* ── Mobile form: one field per line, inputs fill remaining width ── */
+  .birth-sentence {
+    font-family: var(--ff-mono);
+    text-align: left;
+    align-items: baseline;
+    gap: 0 0.5rem;
+    line-height: 3;
+  }
+
+  /* Cancel the 998px rule that puts city alone on its own line */
+  .lb-city { flex-basis: 0; }
+
+  /* Break between date and "at" (new element added in HTML) */
+  .lb-time { flex-basis: 100%; }
+
+  /* City wrapper fills remaining width */
+  .sentence-city {
+    flex: 1;
+    min-width: 0;
+  }
+  .sentence-city .location-wrap {
+    display: block;
+    width: 100%;
+  }
+  .sentence-city #city-input {
+    width: 100%;
+  }
+
+  /* Date / time / email inputs fill remaining width */
+  #f-date,
+  #f-time,
+  #f-email {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* Hide the trailing period */
+  .birth-sentence .word:last-child { display: none; }
+
+  /* Full-width submit button */
+  .form-footer { text-align: center; }
+  .btn-calculate { width: 100%; }
+}
+/* ── Sign intro + nav ── */
+#sign-intro {
+  padding-top: 0.25rem;
+}
+
+.sign-intro-blurb {
+  font-family: var(--ff-serif);
+  font-size: 18px;
+  line-height: 24px;
+  letter-spacing: 0.3px;
+  font-variant-ligatures: none;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+  max-width: 36ch;
+}
+
+.sign-nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+}
+
+.sign-nav a {
+  display: block;
+  font-family: var(--ff-sans);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 0.6rem 0.75rem;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s, color 0.15s;
+}
+
+.sign-nav a:hover {
+  background: var(--text);
+  color: var(--bg);
+}
+
+/* ── Wheel appear animation ── */
+@keyframes wheelAppear {
+  0%   { opacity: 0; transform: scale(0.93); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.wheel-appear {
+  animation: wheelAppear 0.75s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* ── Cross-document page transitions (sign-to-sign navigation) ── */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: 120ms ease-in both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 200ms ease-out 120ms both fade-in;
+}
+
+@keyframes fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+}

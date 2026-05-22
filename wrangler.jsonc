@@ -11,5 +11,11 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CHARTS",
+      "id": "2e2df2da753344b8988eeceb6bed9a51"
+    }
   ]
 }

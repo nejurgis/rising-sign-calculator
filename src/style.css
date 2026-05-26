@@ -81,6 +81,9 @@ body {
 }
 
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
   font-family: var(--ff-mono);
   font-size: 1.2rem;
   text-transform: uppercase;
@@ -88,6 +91,12 @@ body {
   font-weight: bold;
   text-decoration: none;
   color: var(--text);
+}
+.logo-img {
+  width: 52px;
+  height: auto;
+  display: block;
+  flex-shrink: 0;
 }
 
 /* ── Typography Utilities ── */
@@ -774,7 +783,7 @@ img.custom-glyph {
 
   /* Full-width submit button */
   .form-footer { text-align: center; }
-  .btn-calculate { width: 100%; }
+  .btn-calculate { width: 100%; padding: 0.75rem 1rem; }
 }
 /* ── Sign intro + nav ── */
 #sign-intro {

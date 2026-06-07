@@ -9,3 +9,7 @@ npm-debug.log*
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# tool artifacts
+.playwright-mcp/
+.firecrawl/

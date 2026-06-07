@@ -29,7 +29,7 @@
   font-size: clamp(2.5rem, 6vw, 4.5rem);
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.2;
   margin-bottom: 0.25rem;
 }
 
@@ -44,17 +44,48 @@
   vertical-align: -0.08em;
 }
 
-.rising-sub {
-  font-family: var(--ff-sans);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
+.rising-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
   margin-bottom: 2.5rem;
 }
 
+.rising-header-text {
+  min-width: 0;
+}
+
+.rising-hero-img {
+  flex: 0 0 48%;
+  width: 48%;
+  display: block;
+}
+
+@media (max-width: 820px) {
+  .rising-header {
+    flex-direction: column;
+  }
+  .rising-hero-img {
+    flex: none;
+    width: 80vw;
+    max-width: 80vw;
+    align-self: center;
+  }
+}
+
+.rising-sub {
+  font-family: var(--ff-sans);
+  font-size: 0.78rem;
+  line-height: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
 .rising-body {
-  font: normal 21px/27px 'GaramondNo8', 'Times New Roman', Times, serif;
+  font: normal 21px/26px 'GaramondNo8', 'Times New Roman', Times, serif;
   letter-spacing: 0.5px;
   font-variant-ligatures: none;
   color: var(--text-dim);
@@ -66,13 +97,28 @@
   text-indent: 65px;
 }
 
-.rising-body h2 {
+/* Section headings — mobile */
+.rising-body h2,
+.rising-body h3 {
   font-family: var(--ff-sans);
-  font-size: 0.72rem;
-  font-weight: 500;
+  font-size: 0.9rem;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-muted);
+  color: var(--text);
+  width: 130px;
+  margin: 2rem 0 0.5rem;
+  text-align: left;
+}
+
+/* Standalone FAQ title (not inside a .rising-section) */
+.rising-faq-title {
+  font-family: var(--ff-sans);
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text);
   margin: 2rem 0 0.5rem;
   text-align: left;
 }
@@ -108,5 +154,50 @@
   .sign-nav--page {
     position: static;
     grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Desktop: sticky heading column */
+@media (min-width: 821px) {
+  .rising-body {
+    max-width: unset;
+  }
+
+  /* Each section is a two-column grid: heading | body */
+  .rising-section {
+    display: grid;
+    grid-template-columns: 130px .7fr;
+    column-gap: 1.25rem;
+    align-items: first baseline;
+    margin-top: 1.75rem;
+  }
+
+  /* Heading sticks until the section scrolls out */
+  .rising-section > h2,
+  .rising-section > h3 {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #000;
+    text-transform: none;
+    letter-spacing: normal;
+    line-height: 15px;
+    margin: 0;
+    width: auto;
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .rising-section-body {
+    min-width: 0;
+  }
+
+  .rising-faq-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #000;
+    text-transform: none;
+    letter-spacing: normal;
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
   }
 }

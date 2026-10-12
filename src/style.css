@@ -909,6 +909,46 @@ img.custom-glyph {
   transition: color 0.2s;
 }
 .footer-tools a:hover { color: var(--text); }
+.lunarlog-promo {
+  max-width: 260px;
+  text-align: center;
+  margin: 0 auto 2rem;
+}
+.lunarlog-icon-wrap {
+  display: block;
+  position: relative;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.85rem;
+  overflow: hidden;
+  border-radius: 15px;
+  background: radial-gradient(circle at 50% 42%, #141b2e 0%, #0a0e18 75%);
+}
+.lunarlog-icon-wrap img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 108%;
+  height: 108%;
+  transform: translate(-50%, -50%);
+  display: block;
+}
+.lunarlog-promo p {
+  font: italic normal 15.5px/1.4 'GaramondNo8', 'Times New Roman', Times, serif;
+  letter-spacing: 0.5px;
+  font-variant-ligatures: none;
+  color: var(--text-dim);
+  margin-bottom: 1rem;
+}
+.lunarlog-promo p a {
+  color: var(--text-dim);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lunarlog-promo p a:hover { color: var(--text); }
+.lunarlog-promo .app-store-link {
+  display: inline-block;
+}
 .footer-meta {
   font-family: var(--ff-sans);
   font-size: 0.72rem;

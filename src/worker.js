@@ -1,3 +1,5 @@
+import { renderMoonToday } from './moon-today.js';
+
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 function randomId() {
@@ -69,6 +71,13 @@ export default {
       }
 
       return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: JSON_HEADERS });
+    }
+
+    // "What sign is the Moon in today?" — rendered per request, cached 10 min at the edge.
+    if (url.pathname === '/moon-today' || url.pathname === '/moon-today/') {
+      return new Response(renderMoonToday(new Date()), {
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=600' },
+      });
     }
 
     // Redirect /chart/[id] → /?chart=[id] so index.html can auto-load the chart

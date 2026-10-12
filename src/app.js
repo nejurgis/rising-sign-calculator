@@ -1023,8 +1023,8 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr, mobile) {
   const rSign    = mobile ? M * 0.375 : M * 0.320;
   const rBand    = mobile ? M * 0.450 : M * 0.400;
   const rTube    = mobile ? M * 0.490 : M * 0.438;
-  const rPlanet  = mobile ? M * 0.305 : M * 0.462;
-  const rLabel   = mobile ? M * 0.305 : M * 0.488;
+  const rPlanet  = mobile ? M * 0.305 : M * 0.456;
+  const rLabel   = mobile ? M * 0.305 : M * 0.478;
 
   const BASE = ascLon != null ? Math.floor(((ascLon % 360) + 360) % 360 / 30) * 30 : 0;
   const toA = lon => Math.PI - ((lon - BASE + 3600) % 360) * Math.PI / 180;
@@ -1178,8 +1178,8 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr, mobile) {
   // ── Planet glyphs: iterative push-apart in longitude space ──
   // Ticks (above) stay at actual positions; glyphs are spread so they never overlap,
   // with a thin connector line when a glyph is displaced from its tick.
-  const glyphSize = M * 0.054;
-  const minDegGap = (glyphSize / rPlanet) * (180 / Math.PI) * 1.18; // min glyph separation in °
+  const glyphSize = M * 0.044;
+  const minDegGap = (glyphSize / rPlanet) * (180 / Math.PI) * 1.7; // min glyph separation in ° — accounts for the degree-label text next to each glyph, not just the glyph itself
 
   const PLANET_ORDER = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto'];
   const rawPl = [];
@@ -1265,11 +1265,12 @@ function _drawWheelCanvas(canvas, ascLon, mcLon, planets, cusps, dpr, mobile) {
         const lx = cx + Math.cos(dispAng) * rLabel;
         const ly = cy + Math.sin(dispAng) * rLabel;
         ctx.save();
-        ctx.font = `${M * 0.019}px 'Space Mono', monospace`;
+        ctx.font = `${M * 0.015}px 'Space Mono', monospace`;
         ctx.fillStyle = ink(0.60);
+        // Anchor so the text grows AWAY from center, never back toward the glyph.
         const ax = Math.cos(dispAng), ay = Math.sin(dispAng);
-        ctx.textAlign    = ax >  0.4 ? 'right'  : ax < -0.4 ? 'left'   : 'center';
-        ctx.textBaseline = ay >  0.4 ? 'bottom' : ay < -0.4 ? 'top'    : 'middle';
+        ctx.textAlign    = ax >  0.4 ? 'left'  : ax < -0.4 ? 'right'  : 'center';
+        ctx.textBaseline = ay >  0.4 ? 'top'   : ay < -0.4 ? 'bottom' : 'middle';
         ctx.fillText(`${degNum}°`, lx, ly);
         ctx.restore();
       }
